@@ -1,40 +1,51 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+
+export const ADMIN_SESSION_KEY = "ischool_admin_session";
+
+export interface AdminSessionData {
+  admin: { id: string; email: string; name: string };
+  loggedIn: boolean;
+}
+
+export function readAdminSession(): AdminSessionData | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(ADMIN_SESSION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as AdminSessionData;
+    if (!parsed?.loggedIn || !parsed?.admin?.id) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+export function writeAdminSession(data: AdminSessionData) {
+  localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(data));
+}
+
+export function clearAdminSession() {
+  localStorage.removeItem(ADMIN_SESSION_KEY);
+}
 
 export function useAdminSession() {
   const [state, setState] = useState<{
     loading: boolean;
-    userId: string | null;
     isAdmin: boolean;
-  }>({ loading: true, userId: null, isAdmin: false });
+    admin: AdminSessionData["admin"] | null;
+  }>({ loading: true, isAdmin: false, admin: null });
 
   useEffect(() => {
-    let cancelled = false;
-
-    const check = async (userId: string | null) => {
-      if (!userId) {
-        if (!cancelled) setState({ loading: false, userId: null, isAdmin: false });
-        return;
+    const s = readAdminSession();
+    setState({ loading: false, isAdmin: !!s, admin: s?.admin ?? null });
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === ADMIN_SESSION_KEY) {
+        const s2 = readAdminSession();
+        setState({ loading: false, isAdmin: !!s2, admin: s2?.admin ?? null });
       }
-      const { data } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userId)
-        .eq("role", "admin")
-        .maybeSingle();
-      if (!cancelled)
-        setState({ loading: false, userId, isAdmin: !!data });
     };
-
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      check(session?.user?.id ?? null);
-    });
-    supabase.auth.getSession().then(({ data }) => check(data.session?.user?.id ?? null));
-
-    return () => {
-      cancelled = true;
-      sub.subscription.unsubscribe();
-    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
   }, []);
 
   return state;
