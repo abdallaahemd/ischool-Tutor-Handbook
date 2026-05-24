@@ -27,17 +27,12 @@ function Index() {
       <div className="mx-auto max-w-6xl px-4 py-8 md:px-8">
         {/* Hero */}
         <section
-          className="relative overflow-hidden rounded-3xl border border-border p-8 md:p-14"
+          className="relative overflow-hidden rounded-3xl border border-border bg-card p-8 md:p-14"
           style={{
-            background:
-              "linear-gradient(135deg, var(--hero-from), var(--hero-via), var(--hero-to))",
+            backgroundImage:
+              "radial-gradient(circle at top right, rgba(37,99,235,0.10), transparent 55%), radial-gradient(circle at bottom left, rgba(245,158,11,0.12), transparent 55%)",
           }}
         >
-          <div className="absolute right-8 top-8 hidden gap-2 md:flex">
-            <span className="h-2 w-2 rounded-full bg-primary" />
-            <span className="h-2 w-2 rounded-full bg-accent" />
-            <span className="h-2 w-2 rounded-full bg-[var(--pdf)]" />
-          </div>
           <div className="flex flex-col items-center text-center">
             <LogoMark size={72} />
             <h1 className="mt-6 text-3xl font-bold tracking-tight text-foreground md:text-5xl">
@@ -46,6 +41,11 @@ function Index() {
             <p className="mt-3 max-w-2xl text-sm text-muted-foreground md:text-base">
               Everything you need to run great sessions — systems, policies, materials and feedback templates, all in one place.
             </p>
+            <div className="mt-5 flex items-center justify-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-[#2563EB]" />
+              <span className="h-2 w-2 rounded-full bg-[#F59E0B]" />
+              <span className="h-2 w-2 rounded-full bg-[#F97316]" />
+            </div>
           </div>
         </section>
 
@@ -63,10 +63,10 @@ function Index() {
               <Link
                 key={cat.id}
                 to={`/c/${cat.slug}`}
-                className="group relative flex flex-col rounded-2xl border border-border bg-card p-5 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_8px_30px_-12px_oklch(0.55_0.18_250/0.25)]"
+                className="group relative flex flex-col rounded-2xl border border-border bg-card p-5 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_8px_30px_-12px_rgba(37,99,235,0.25)]"
               >
                 <div className="flex items-start justify-between">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary transition-transform group-hover:scale-110">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground transition-transform group-hover:scale-110">
                     <Icon name={cat.icon} size={22} />
                   </div>
                   <ArrowUpRight className="h-5 w-5 text-muted-foreground transition group-hover:text-primary" />

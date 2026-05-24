@@ -9,9 +9,13 @@ import {
   Plus,
   Pencil,
   Trash2,
+  X,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAdminSession } from "@/components/admin/useAdminSession";
+import {
+  useAdminSession,
+  clearAdminSession,
+} from "@/components/admin/useAdminSession";
 import { LogoMark } from "@/components/handbook/Logo";
 import {
   useCategories,
@@ -21,7 +25,7 @@ import {
 } from "@/components/handbook/data";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-export const Route = createFileRoute("/admin/dashboard")({
+export const Route = createFileRoute("/admin")({
   component: AdminDashboard,
 });
 
@@ -34,34 +38,36 @@ function AdminDashboard() {
 
   useEffect(() => {
     if (!session.loading && !session.isAdmin) {
-      navigate({ to: "/admin/login" });
+      navigate({ to: "/login" });
     }
   }, [session, navigate]);
 
-  const logout = async () => {
-    await supabase.auth.signOut();
-    localStorage.clear();
-    sessionStorage.clear();
-    navigate({ to: "/admin/login" });
+  const logout = () => {
+    clearAdminSession();
+    navigate({ to: "/login" });
   };
 
   if (session.loading || !session.isAdmin) {
-    return <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">Loading…</div>;
+    return (
+      <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
+        Loading…
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-background">
-      <aside className="fixed inset-y-0 left-0 z-30 w-60 bg-foreground text-background">
-        <div className="flex h-20 items-center gap-3 px-5 border-b border-white/10">
+      <aside className="fixed inset-y-0 left-0 z-30 w-60 border-r border-border bg-card">
+        <div className="flex h-20 items-center gap-3 border-b border-border px-5">
           <LogoMark size={32} />
-          <div className="text-sm font-semibold">Admin</div>
+          <div className="text-sm font-semibold text-foreground">Admin</div>
         </div>
         <nav className="flex flex-col gap-1 p-3">
           <AdminNav active={tab === "dashboard"} onClick={() => setTab("dashboard")} icon={<LayoutDashboard className="h-4 w-4" />} label="Dashboard" />
           <AdminNav active={tab === "categories"} onClick={() => setTab("categories")} icon={<Folder className="h-4 w-4" />} label="Categories" />
           <AdminNav active={tab === "cards"} onClick={() => setTab("cards")} icon={<FileText className="h-4 w-4" />} label="Cards" />
           <AdminNav active={tab === "materials"} onClick={() => setTab("materials")} icon={<Upload className="h-4 w-4" />} label="Materials" />
-          <button onClick={logout} className="mt-6 inline-flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-background/80 hover:bg-white/10">
+          <button onClick={logout} className="mt-6 inline-flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted">
             <LogOut className="h-4 w-4" /> Logout
           </button>
         </nav>
@@ -79,7 +85,12 @@ function AdminDashboard() {
 
 function AdminNav({ active, onClick, icon, label }: { active: boolean; onClick: () => void; icon: React.ReactNode; label: string }) {
   return (
-    <button onClick={onClick} className={`inline-flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition ${active ? "bg-primary text-primary-foreground" : "text-background/80 hover:bg-white/10"}`}>
+    <button
+      onClick={onClick}
+      className={`inline-flex items-center gap-3 rounded-md px-3 py-2 text-sm transition ${
+        active ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-muted"
+      }`}
+    >
       {icon} {label}
     </button>
   );
@@ -94,7 +105,7 @@ function DashboardTab() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Overview</h1>
+      <h1 className="text-2xl font-bold text-foreground">Overview</h1>
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="Categories" value={categories.length} />
         <Stat label="Cards" value={cards.length} />
@@ -102,7 +113,7 @@ function DashboardTab() {
         <Stat label="Links" value={linkCount} />
       </div>
 
-      <h2 className="mt-10 text-lg font-semibold">Cards by category</h2>
+      <h2 className="mt-10 text-lg font-semibold text-foreground">Cards by category</h2>
       <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {categories.map((c) => (
           <div key={c.id} className="rounded-xl border border-border bg-card p-4">
@@ -126,7 +137,7 @@ function Stat({ label, value }: { label: string; value: number }) {
   );
 }
 
-/* ---------- Categories tab ---------- */
+/* ---------- Categories ---------- */
 function CategoriesTab() {
   const qc = useQueryClient();
   const { data: categories = [] } = useCategories();
@@ -152,17 +163,18 @@ function CategoriesTab() {
   };
 
   const remove = async (id: string) => {
-    if (!confirm("Delete this category and all its cards?")) return;
+    if (!confirm("Delete this category?")) return;
     await supabase.from("categories").delete().eq("id", id);
     qc.invalidateQueries({ queryKey: ["categories"] });
-    qc.invalidateQueries({ queryKey: ["cards"] });
   };
 
   return (
     <div>
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Categories</h1>
-        <button onClick={() => setEditing({})} className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 h-9 text-sm font-medium text-primary-foreground"><Plus className="h-4 w-4" /> New</button>
+        <h1 className="text-2xl font-bold text-foreground">Categories</h1>
+        <button onClick={() => setEditing({})} className="inline-flex items-center gap-2 rounded-md bg-primary px-3 h-9 text-sm font-medium text-primary-foreground hover:bg-blue-700">
+          <Plus className="h-4 w-4" /> New
+        </button>
       </div>
       <div className="mt-6 overflow-hidden rounded-xl border border-border bg-card">
         <table className="w-full text-sm">
@@ -179,14 +191,14 @@ function CategoriesTab() {
           <tbody>
             {categories.map((c) => (
               <tr key={c.id} className="border-t border-border">
-                <td className="px-4 py-2 font-medium">{c.name}</td>
+                <td className="px-4 py-2 font-medium text-foreground">{c.name}</td>
                 <td className="px-4 py-2 text-muted-foreground">{c.slug}</td>
                 <td className="px-4 py-2 text-muted-foreground">{c.icon}</td>
                 <td className="px-4 py-2 text-muted-foreground">{c.order}</td>
                 <td className="px-4 py-2 text-muted-foreground">{cards.filter((x) => x.category_id === c.id).length}</td>
                 <td className="px-4 py-2 text-right">
                   <button onClick={() => setEditing(c)} className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-muted"><Pencil className="h-4 w-4" /></button>
-                  <button onClick={() => remove(c.id)} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-destructive hover:bg-destructive/10"><Trash2 className="h-4 w-4" /></button>
+                  <button onClick={() => remove(c.id)} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-destructive hover:bg-red-50"><Trash2 className="h-4 w-4" /></button>
                 </td>
               </tr>
             ))}
@@ -207,7 +219,7 @@ function CategoriesTab() {
   );
 }
 
-/* ---------- Cards tab ---------- */
+/* ---------- Cards ---------- */
 function CardsTab() {
   const qc = useQueryClient();
   const { data: categories = [] } = useCategories();
@@ -247,13 +259,15 @@ function CardsTab() {
   return (
     <div>
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Cards</h1>
+        <h1 className="text-2xl font-bold text-foreground">Cards</h1>
         <div className="flex items-center gap-2">
-          <select value={filter} onChange={(e) => setFilter(e.target.value)} className="h-9 rounded-lg border border-border bg-background px-3 text-sm">
+          <select value={filter} onChange={(e) => setFilter(e.target.value)} className="h-9 rounded-md border border-border bg-background px-3 text-sm">
             <option value="">All categories</option>
             {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
-          <button onClick={() => setEditing({ category_id: categories[0]?.id, icon_style: "link", icon: "Link2" })} className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 h-9 text-sm font-medium text-primary-foreground"><Plus className="h-4 w-4" /> New</button>
+          <button onClick={() => setEditing({ category_id: categories[0]?.id, icon_style: "link", icon: "Link2" })} className="inline-flex items-center gap-2 rounded-md bg-primary px-3 h-9 text-sm font-medium text-primary-foreground hover:bg-blue-700">
+            <Plus className="h-4 w-4" /> New
+          </button>
         </div>
       </div>
 
@@ -271,13 +285,13 @@ function CardsTab() {
           <tbody>
             {filtered.map((c) => (
               <tr key={c.id} className="border-t border-border">
-                <td className="px-4 py-2 font-medium">{c.header}</td>
+                <td className="px-4 py-2 font-medium text-foreground">{c.header}</td>
                 <td className="px-4 py-2 text-muted-foreground">{categories.find((x) => x.id === c.category_id)?.name}</td>
                 <td className="px-4 py-2 uppercase text-muted-foreground">{c.icon_style}</td>
                 <td className="px-4 py-2 text-muted-foreground">{c.order}</td>
                 <td className="px-4 py-2 text-right">
                   <button onClick={() => setEditing(c)} className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-muted"><Pencil className="h-4 w-4" /></button>
-                  <button onClick={() => remove(c.id)} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-destructive hover:bg-destructive/10"><Trash2 className="h-4 w-4" /></button>
+                  <button onClick={() => remove(c.id)} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-destructive hover:bg-red-50"><Trash2 className="h-4 w-4" /></button>
                 </td>
               </tr>
             ))}
@@ -289,7 +303,7 @@ function CardsTab() {
         <Modal title={editing.id ? "Edit card" : "New card"} onClose={() => setEditing(null)} onSave={save}>
           <div>
             <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Category</label>
-            <select value={editing.category_id ?? ""} onChange={(e) => setEditing({ ...editing, category_id: e.target.value })} className="mt-1 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm">
+            <select value={editing.category_id ?? ""} onChange={(e) => setEditing({ ...editing, category_id: e.target.value })} className="mt-1 h-10 w-full rounded-md border border-border bg-background px-3 text-sm">
               {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
@@ -297,7 +311,7 @@ function CardsTab() {
           <Field label="Body" value={editing.body ?? ""} onChange={(v) => setEditing({ ...editing, body: v })} />
           <div>
             <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Icon Style</label>
-            <select value={editing.icon_style ?? "link"} onChange={(e) => setEditing({ ...editing, icon_style: e.target.value })} className="mt-1 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm">
+            <select value={editing.icon_style ?? "link"} onChange={(e) => setEditing({ ...editing, icon_style: e.target.value })} className="mt-1 h-10 w-full rounded-md border border-border bg-background px-3 text-sm">
               <option value="pdf">PDF</option>
               <option value="link">LINK</option>
             </select>
@@ -312,7 +326,7 @@ function CardsTab() {
   );
 }
 
-/* ---------- Materials tab ---------- */
+/* ---------- Materials ---------- */
 interface Material {
   id: string;
   title: string;
@@ -371,8 +385,8 @@ function MaterialsTab() {
       }
       setEditing(null);
       qc.invalidateQueries({ queryKey: ["materials"] });
-    } catch (err: any) {
-      alert(err.message ?? "Failed");
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Failed");
     } finally {
       setBusy(false);
     }
@@ -388,8 +402,10 @@ function MaterialsTab() {
   return (
     <div>
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Materials</h1>
-        <button onClick={() => setEditing({ type: "link" })} className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 h-9 text-sm font-medium text-primary-foreground"><Plus className="h-4 w-4" /> Upload</button>
+        <h1 className="text-2xl font-bold text-foreground">Materials</h1>
+        <button onClick={() => setEditing({ type: "link" })} className="inline-flex items-center gap-2 rounded-md bg-primary px-3 h-9 text-sm font-medium text-primary-foreground hover:bg-blue-700">
+          <Plus className="h-4 w-4" /> Upload
+        </button>
       </div>
       <div className="mt-6 overflow-hidden rounded-xl border border-border bg-card">
         <table className="w-full text-sm">
@@ -408,13 +424,13 @@ function MaterialsTab() {
             )}
             {materials.map((m) => (
               <tr key={m.id} className="border-t border-border">
-                <td className="px-4 py-2 font-medium">{m.title}</td>
+                <td className="px-4 py-2 font-medium text-foreground">{m.title}</td>
                 <td className="px-4 py-2 text-muted-foreground">{categories.find((c) => c.id === m.category_id)?.name ?? "—"}</td>
                 <td className="px-4 py-2 uppercase text-muted-foreground">{m.type}</td>
                 <td className="px-4 py-2 text-muted-foreground">{new Date(m.created_at).toLocaleDateString()}</td>
                 <td className="px-4 py-2 text-right">
                   <button onClick={() => setEditing(m)} className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-muted"><Pencil className="h-4 w-4" /></button>
-                  <button onClick={() => remove(m)} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-destructive hover:bg-destructive/10"><Trash2 className="h-4 w-4" /></button>
+                  <button onClick={() => remove(m)} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-destructive hover:bg-red-50"><Trash2 className="h-4 w-4" /></button>
                 </td>
               </tr>
             ))}
@@ -428,17 +444,17 @@ function MaterialsTab() {
           <Field label="Description" value={editing.description ?? ""} onChange={(v) => setEditing({ ...editing, description: v })} />
           <div>
             <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Category</label>
-            <select value={editing.category_id ?? ""} onChange={(e) => setEditing({ ...editing, category_id: e.target.value })} className="mt-1 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm">
+            <select value={editing.category_id ?? ""} onChange={(e) => setEditing({ ...editing, category_id: e.target.value })} className="mt-1 h-10 w-full rounded-md border border-border bg-background px-3 text-sm">
               <option value="">— None —</option>
               {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
           <div>
             <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Type</label>
-            <select value={editing.type ?? "link"} onChange={(e) => setEditing({ ...editing, type: e.target.value })} className="mt-1 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm">
+            <select value={editing.type ?? "link"} onChange={(e) => setEditing({ ...editing, type: e.target.value })} className="mt-1 h-10 w-full rounded-md border border-border bg-background px-3 text-sm">
+              <option value="link">Link</option>
               <option value="pdf">PDF</option>
               <option value="video">Video</option>
-              <option value="link">Link</option>
             </select>
           </div>
           {editing.type === "link" ? (
@@ -447,7 +463,6 @@ function MaterialsTab() {
             <div>
               <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">File</label>
               <input type="file" onChange={(e) => setEditing({ ...editing, file: e.target.files?.[0] ?? null })} className="mt-1 block w-full text-sm" />
-              {editing.storage_path && <p className="mt-1 text-xs text-muted-foreground">Current: {editing.storage_path}</p>}
             </div>
           )}
         </Modal>
@@ -456,16 +471,19 @@ function MaterialsTab() {
   );
 }
 
-/* ---------- Shared Modal / Field ---------- */
+/* ---------- Modal & Field ---------- */
 function Modal({ title, children, onClose, onSave, busy }: { title: string; children: React.ReactNode; onClose: () => void; onSave: () => void; busy?: boolean }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-xl">
-        <h2 className="text-lg font-semibold">{title}</h2>
-        <div className="mt-4 space-y-3 max-h-[70vh] overflow-y-auto pr-1">{children}</div>
-        <div className="mt-6 flex items-center justify-end gap-2">
-          <button onClick={onClose} className="h-9 rounded-lg border border-border bg-background px-3 text-sm">Cancel</button>
-          <button onClick={onSave} disabled={busy} className="h-9 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground disabled:opacity-60">{busy ? "Saving…" : "Save"}</button>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+          <button onClick={onClose} className="rounded p-1.5 hover:bg-muted"><X className="h-4 w-4" /></button>
+        </div>
+        <div className="mt-4 space-y-3">{children}</div>
+        <div className="mt-6 flex justify-end gap-2">
+          <button onClick={onClose} className="rounded-md border border-border bg-background px-3 h-9 text-sm hover:bg-muted">Cancel</button>
+          <button onClick={onSave} disabled={busy} className="rounded-md bg-primary px-3 h-9 text-sm font-medium text-primary-foreground hover:bg-blue-700 disabled:opacity-60">{busy ? "Saving…" : "Save"}</button>
         </div>
       </div>
     </div>
@@ -476,7 +494,7 @@ function Field({ label, value, onChange, type = "text" }: { label: string; value
   return (
     <div>
       <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</label>
-      <input type={type} value={value} onChange={(e) => onChange(e.target.value)} className="mt-1 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+      <input type={type} value={value} onChange={(e) => onChange(e.target.value)} className="mt-1 h-10 w-full rounded-md border border-border bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
     </div>
   );
 }

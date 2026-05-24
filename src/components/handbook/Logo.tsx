@@ -1,24 +1,23 @@
-import { GraduationCap } from "lucide-react";
+import logoUrl from "@/assets/ischool-logo.png";
 
 export function LogoMark({ size = 36 }: { size?: number }) {
   return (
-    <div
-      className="flex items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm"
-      style={{ width: size, height: size }}
-    >
-      <GraduationCap size={Math.round(size * 0.6)} />
-    </div>
+    <img
+      src={logoUrl}
+      alt="iSchool"
+      style={{ height: size, width: "auto" }}
+      className="object-contain"
+    />
   );
 }
 
 export function LogoFull() {
   return (
     <div className="flex items-center gap-3">
-      <LogoMark size={40} />
+      <img src={logoUrl} alt="iSchool" className="h-9 w-auto object-contain" />
       <div className="leading-tight">
-        <div className="text-base font-bold text-foreground">iSchool</div>
         <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
-          Instructor Handbook
+          Tutor Handbook
         </div>
       </div>
     </div>
