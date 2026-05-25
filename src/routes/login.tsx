@@ -29,14 +29,14 @@ function LoginPage() {
     setError("");
     setBusy(true);
     try {
-      const { data, error: qErr } = await supabase
-        .from("admins" as never)
-        .select("id, email, name, password")
-        .eq("email", email)
-        .maybeSingle();
+      const { data, error: qErr } = await supabase.rpc(
+        "verify_admin_login" as never,
+        { _email: email, _password: password } as never,
+      );
       if (qErr) throw qErr;
-      const row = data as { id: string; email: string; name: string; password: string } | null;
-      if (!row || row.password !== password) {
+      const rows = (data as Array<{ id: string; email: string; name: string }> | null) ?? [];
+      const row = rows[0];
+      if (!row) {
         setError("Invalid email or password. Please try again.");
         return;
       }
