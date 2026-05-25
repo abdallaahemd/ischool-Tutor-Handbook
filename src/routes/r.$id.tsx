@@ -14,6 +14,12 @@ function ResourceViewer() {
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
+    const handler = (e: MouseEvent) => e.preventDefault();
+    document.addEventListener("contextmenu", handler);
+    return () => document.removeEventListener("contextmenu", handler);
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
     (async () => {
       const { data } = await supabase
@@ -45,5 +51,5 @@ function ResourceViewer() {
 
   if (!card) return <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">Loading…</div>;
 
-  return <PdfModal url={card.open_link} title={card.header} onClose={() => navigate({ to: "/" })} />;
+  return <PdfModal url={card.open_link} title={card.header} onClose={() => navigate({ to: "/" })} secure />;
 }

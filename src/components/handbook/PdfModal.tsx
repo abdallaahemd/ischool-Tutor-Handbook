@@ -1,14 +1,24 @@
 import { X } from "lucide-react";
 import { useEffect } from "react";
 
+function toEmbedUrl(url: string) {
+  const match = url.match(/https:\/\/drive\.google\.com\/file\/d\/([^/]+)\/preview/);
+  if (match) {
+    return `https://drive.google.com/file/d/${match[1]}/preview?embedded=true&rm=minimal`;
+  }
+  return url;
+}
+
 export function PdfModal({
   url,
   title,
   onClose,
+  secure = false,
 }: {
   url: string;
   title: string;
   onClose: () => void;
+  secure?: boolean;
 }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -19,6 +29,8 @@ export function PdfModal({
       document.body.style.overflow = "";
     };
   }, [onClose]);
+
+  const iframeUrl = secure ? toEmbedUrl(url) : url;
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-black/80 backdrop-blur-sm">
@@ -34,12 +46,21 @@ export function PdfModal({
           <X className="h-4 w-4" />
         </button>
       </div>
-      <iframe
-        src={url}
-        title={title}
-        className="flex-1 w-full border-0 bg-white"
-        allow="autoplay"
-      />
+      <div className="relative flex-1">
+        <iframe
+          src={iframeUrl}
+          title={title}
+          className="h-full w-full border-0 bg-white"
+          allow="autoplay"
+          style={{ pointerEvents: "auto" }}
+        />
+        {secure && (
+          <div
+            className="absolute top-0 right-0 h-10 w-10 bg-white"
+            style={{ zIndex: 10 }}
+          />
+        )}
+      </div>
     </div>
   );
 }
