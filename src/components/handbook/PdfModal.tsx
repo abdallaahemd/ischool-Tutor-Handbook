@@ -56,8 +56,17 @@ export function PdfModal({
         />
         {secure && (
           <div
-            className="absolute top-0 right-0 h-10 w-10 bg-white"
-            style={{ zIndex: 10 }}
+            style={{
+              position: "absolute",
+              top: 0,
+              right: 0,
+              width: "80px",
+              height: "80px",
+              backgroundColor: "#000",
+              zIndex: 9999,
+              cursor: "default",
+              pointerEvents: "all",
+            }}
           />
         )}
       </div>
