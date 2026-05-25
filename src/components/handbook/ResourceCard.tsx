@@ -79,13 +79,3 @@ export function ResourceCard({
     </button>
   );
 }
-
-// legacy export kept for compatibility
-function _unused() {
-  return (
-    <button
-      className="group relative flex flex-col rounded-2xl border border-border bg-card p-5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_8px_30px_-12px_rgba(37,99,235,0.25)]"
-    >
-    </button>
-  );
-}
