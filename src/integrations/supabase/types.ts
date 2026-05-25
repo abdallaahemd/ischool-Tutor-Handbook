@@ -20,21 +20,21 @@ export type Database = {
           email: string
           id: string
           name: string
-          password: string
+          password_hash: string
         }
         Insert: {
           created_at?: string
           email: string
           id?: string
           name: string
-          password: string
+          password_hash: string
         }
         Update: {
           created_at?: string
           email?: string
           id?: string
           name?: string
-          password?: string
+          password_hash?: string
         }
         Relationships: []
       }
@@ -188,6 +188,14 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      verify_admin_login: {
+        Args: { _email: string; _password: string }
+        Returns: {
+          email: string
+          id: string
+          name: string
+        }[]
       }
     }
     Enums: {
