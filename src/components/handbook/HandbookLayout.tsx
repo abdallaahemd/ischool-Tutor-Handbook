@@ -61,6 +61,7 @@ export function HandbookLayout({
               label={c.name}
               collapsed={collapsed}
               active={path === `/c/${c.slug}`}
+              count={allCards.filter((x) => x.category_id === c.id).length}
             />
           ))}
         </nav>
@@ -97,6 +98,7 @@ export function HandbookLayout({
                   collapsed={false}
                   active={path === `/c/${c.slug}`}
                   onClick={() => setMobileOpen(false)}
+                  count={allCards.filter((x) => x.category_id === c.id).length}
                 />
               ))}
             </nav>
@@ -174,6 +176,7 @@ function NavLink({
   collapsed,
   active,
   onClick,
+  count,
 }: {
   to: string;
   icon: string;
@@ -181,6 +184,7 @@ function NavLink({
   collapsed: boolean;
   active: boolean;
   onClick?: () => void;
+  count?: number;
 }) {
   return (
     <Link
@@ -195,6 +199,17 @@ function NavLink({
     >
       {icon === "Home" ? <Home className="h-4 w-4 shrink-0" /> : <Icon name={icon} size={16} className="shrink-0" />}
       {!collapsed && <span className="truncate">{label}</span>}
+      {!collapsed && typeof count === "number" && (
+        <span
+          className={`ml-auto text-[10px] rounded-full px-1.5 py-0.5 font-medium ${
+            active
+              ? "bg-white/20 text-white"
+              : "bg-muted text-muted-foreground"
+          }`}
+        >
+          {count}
+        </span>
+      )}
     </Link>
   );
 }
