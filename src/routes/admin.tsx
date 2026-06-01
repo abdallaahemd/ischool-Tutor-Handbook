@@ -31,6 +31,16 @@ export const Route = createFileRoute("/admin")({
   component: AdminDashboard,
 });
 
+function requireAdmin(navigate: ReturnType<typeof useNavigate>): boolean {
+  const session = readAdminSession();
+  if (!session) {
+    toast.error("Session expired. Please sign in again.");
+    navigate({ to: "/login" });
+    return false;
+  }
+  return true;
+}
+
 type Tab = "dashboard" | "categories" | "cards" | "materials";
 
 function AdminDashboard() {
@@ -142,12 +152,14 @@ function Stat({ label, value }: { label: string; value: number }) {
 /* ---------- Categories ---------- */
 function CategoriesTab() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const { data: categories = [] } = useCategories();
   const { data: cards = [] } = useAllCards();
   const [editing, setEditing] = useState<Partial<Category> | null>(null);
 
   const save = async () => {
     if (!editing) return;
+    if (!requireAdmin(navigate)) return;
     const payload = {
       name: editing.name ?? "",
       slug: editing.slug ?? "",
@@ -155,18 +167,29 @@ function CategoriesTab() {
       description: editing.description ?? "",
       order: editing.order ?? 0,
     };
-    if (editing.id) {
-      await supabase.from("categories").update(payload).eq("id", editing.id);
-    } else {
-      await supabase.from("categories").insert(payload);
+    const { error } = editing.id
+      ? await supabase.from("categories").update(payload).eq("id", editing.id)
+      : await supabase.from("categories").insert(payload);
+    if (error) {
+      console.error("Supabase error:", error.message);
+      toast.error(error.message);
+      return;
     }
+    toast.success(editing.id ? "Category updated" : "Category created");
     setEditing(null);
     qc.invalidateQueries({ queryKey: ["categories"] });
   };
 
   const remove = async (id: string) => {
+    if (!requireAdmin(navigate)) return;
     if (!confirm("Delete this category?")) return;
-    await supabase.from("categories").delete().eq("id", id);
+    const { error } = await supabase.from("categories").delete().eq("id", id);
+    if (error) {
+      console.error("Supabase error:", error.message);
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Category deleted");
     qc.invalidateQueries({ queryKey: ["categories"] });
   };
 
@@ -224,6 +247,7 @@ function CategoriesTab() {
 /* ---------- Cards ---------- */
 function CardsTab() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const { data: categories = [] } = useCategories();
   const { data: cards = [] } = useAllCards();
   const [filter, setFilter] = useState<string>("");
@@ -233,6 +257,7 @@ function CardsTab() {
 
   const save = async () => {
     if (!editing) return;
+    if (!requireAdmin(navigate)) return;
     const payload = {
       category_id: editing.category_id!,
       header: editing.header ?? "",
@@ -243,18 +268,29 @@ function CardsTab() {
       open_link: editing.open_link ?? "",
       order: editing.order ?? 0,
     };
-    if (editing.id) {
-      await supabase.from("cards").update(payload).eq("id", editing.id);
-    } else {
-      await supabase.from("cards").insert(payload);
+    const { error } = editing.id
+      ? await supabase.from("cards").update(payload).eq("id", editing.id)
+      : await supabase.from("cards").insert(payload);
+    if (error) {
+      console.error("Supabase error:", error.message);
+      toast.error(error.message);
+      return;
     }
+    toast.success(editing.id ? "Card updated" : "Card created");
     setEditing(null);
     qc.invalidateQueries({ queryKey: ["cards"] });
   };
 
   const remove = async (id: string) => {
+    if (!requireAdmin(navigate)) return;
     if (!confirm("Delete this card?")) return;
-    await supabase.from("cards").delete().eq("id", id);
+    const { error } = await supabase.from("cards").delete().eq("id", id);
+    if (error) {
+      console.error("Supabase error:", error.message);
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Card deleted");
     qc.invalidateQueries({ queryKey: ["cards"] });
   };
 
@@ -315,6 +351,7 @@ function CardsTab() {
             <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Icon Style</label>
             <select value={editing.icon_style ?? "link"} onChange={(e) => setEditing({ ...editing, icon_style: e.target.value })} className="mt-1 h-10 w-full rounded-md border border-border bg-background px-3 text-sm">
               <option value="pdf">PDF</option>
+              <option value="video">VIDEO</option>
               <option value="link">LINK</option>
             </select>
           </div>
@@ -356,6 +393,7 @@ function useMaterials() {
 
 function MaterialsTab() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const { data: materials = [] } = useMaterials();
   const { data: categories = [] } = useCategories();
   const [editing, setEditing] = useState<(Partial<Material> & { file?: File | null }) | null>(null);
@@ -363,6 +401,7 @@ function MaterialsTab() {
 
   const save = async () => {
     if (!editing) return;
+    if (!requireAdmin(navigate)) return;
     setBusy(true);
     try {
       let storage_path = editing.storage_path ?? null;
@@ -380,24 +419,32 @@ function MaterialsTab() {
         url: editing.type === "link" ? (editing.url ?? null) : null,
         storage_path,
       };
-      if (editing.id) {
-        await supabase.from("materials").update(payload).eq("id", editing.id);
-      } else {
-        await supabase.from("materials").insert(payload);
-      }
+      const { error } = editing.id
+        ? await supabase.from("materials").update(payload).eq("id", editing.id)
+        : await supabase.from("materials").insert(payload);
+      if (error) throw error;
+      toast.success(editing.id ? "Material updated" : "Material uploaded");
       setEditing(null);
       qc.invalidateQueries({ queryKey: ["materials"] });
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Failed");
+      const msg = err instanceof Error ? err.message : "Failed";
+      console.error("Supabase error:", msg);
+      toast.error(msg);
     } finally {
       setBusy(false);
     }
   };
 
   const remove = async (m: Material) => {
+    if (!requireAdmin(navigate)) return;
     if (!confirm("Delete this material?")) return;
     if (m.storage_path) await supabase.storage.from("materials").remove([m.storage_path]);
-    await supabase.from("materials").delete().eq("id", m.id);
+    const { error } = await supabase.from("materials").delete().eq("id", m.id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Material deleted");
     qc.invalidateQueries({ queryKey: ["materials"] });
   };
 
