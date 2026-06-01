@@ -35,7 +35,7 @@ export function PdfViewer({ driveUrl }: { driveUrl: string }) {
     setIsLoading(true);
     setError(null);
     const url = toDirectUrl(driveUrl);
-    const task = pdfjsLib.getDocument(url);
+    const task = pdfjsLib.getDocument({ url });
     task.promise
       .then((doc) => {
         if (cancelled) return;
