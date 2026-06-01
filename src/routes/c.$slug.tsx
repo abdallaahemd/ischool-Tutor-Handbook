@@ -1,8 +1,9 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useState } from "react";
+import { FolderOpen } from "lucide-react";
 import { HandbookLayout } from "@/components/handbook/HandbookLayout";
 import { ResourceCard } from "@/components/handbook/ResourceCard";
-import { PdfModal } from "@/components/handbook/PdfModal";
+import { InlineViewer } from "@/components/handbook/InlineViewer";
 import {
   useCategories,
   useCardsByCategory,
@@ -18,12 +19,15 @@ function CategoryPage() {
   const { data: categories = [] } = useCategories();
   const category = categories.find((c) => c.slug === slug);
   const { data: cards = [], isLoading } = useCardsByCategory(category?.id);
-  const [openCard, setOpenCard] = useState<Card | null>(null);
+  const [openedCard, setOpenedCard] = useState<Card | null>(null);
 
   if (categories.length > 0 && !category) throw notFound();
 
   return (
     <HandbookLayout>
+      {openedCard ? (
+        <InlineViewer card={openedCard} onBack={() => setOpenedCard(null)} />
+      ) : (
       <div className="mx-auto max-w-6xl px-4 py-8 md:px-8">
         <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-border bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground">
           iSchool Handbook
@@ -40,22 +44,16 @@ function CategoryPage() {
             <div className="col-span-full text-sm text-muted-foreground">Loading…</div>
           )}
           {!isLoading && cards.length === 0 && (
-            <div className="col-span-full rounded-2xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
-              No resources yet.
+            <div className="col-span-full flex flex-col items-center justify-center py-24 text-center">
+              <FolderOpen className="h-12 w-12 text-muted-foreground mb-4" />
+              <p className="text-muted-foreground text-sm">No resources here yet. Check back soon.</p>
             </div>
           )}
           {cards.map((c) => (
-            <ResourceCard key={c.id} card={c} onOpenPdf={setOpenCard} />
+            <ResourceCard key={c.id} card={c} onOpen={setOpenedCard} />
           ))}
         </div>
       </div>
-
-      {openCard && (
-        <PdfModal
-          url={openCard.open_link}
-          title={openCard.header}
-          onClose={() => setOpenCard(null)}
-        />
       )}
     </HandbookLayout>
   );
