@@ -25,6 +25,9 @@ export interface Card {
 export function useCategories() {
   return useQuery({
     queryKey: ["categories"],
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("categories")
@@ -39,6 +42,9 @@ export function useCategories() {
 export function useAllCards() {
   return useQuery({
     queryKey: ["cards"],
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("cards")
@@ -54,6 +60,9 @@ export function useCardsByCategory(categoryId: string | undefined) {
   return useQuery({
     queryKey: ["cards", categoryId],
     enabled: !!categoryId,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("cards")
