@@ -1,42 +1,35 @@
-import { useState } from "react";
-import { FileX } from "lucide-react";
-
-function toEmbedUrl(driveUrl: string): string {
+function toPreviewUrl(driveUrl: string): string {
   const match = driveUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
   if (!match) return driveUrl;
-  const fileId = match[1];
-  const directUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
-  return `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(directUrl)}`;
+  return `https://drive.google.com/file/d/${match[1]}/preview`;
 }
 
 export function PdfViewer({ driveUrl }: { driveUrl: string }) {
-  const [failed, setFailed] = useState(false);
-
-  if (failed) {
-    return (
-      <div
-        style={{ width: "100%", height: "calc(100vh - 120px)" }}
-        className="flex flex-col items-center justify-center gap-4 text-muted-foreground"
-      >
-        <FileX className="h-12 w-12" />
-        <p className="text-sm">Unable to load PDF preview.</p>
-      </div>
-    );
-  }
-
   return (
-    <div style={{ position: "relative", width: "100%", height: "calc(100vh - 120px)" }}>
+    <div style={{ position: "relative", width: "100%", height: "calc(100vh - 120px)", overflow: "hidden", borderRadius: 12 }}>
       <iframe
-        src={toEmbedUrl(driveUrl)}
+        src={toPreviewUrl(driveUrl)}
         title="PDF viewer"
-        onError={() => setFailed(true)}
+        allow="autoplay"
         style={{
           width: "100%",
           height: "100%",
           border: "none",
-          borderRadius: "12px",
+          borderRadius: 12,
         }}
-        sandbox="allow-scripts allow-same-origin"
+      />
+      {/* Cover Drive's top-right pop-out / tools button */}
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          right: 0,
+          width: 80,
+          height: 80,
+          backgroundColor: "hsl(var(--background))",
+          zIndex: 9999,
+          pointerEvents: "all",
+        }}
       />
     </div>
   );
