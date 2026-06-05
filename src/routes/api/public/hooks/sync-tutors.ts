@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-const SHEET_ID = "1nMPM2y3MgcFjZsEm7pRdN2zVTsoIqd_7jq23lXYCGWc";
+const SHEET_ID = "1_2hY54ixJqPGxEtF4fpH-T1e444e9GLXfRQt7S74djg";
 const SHEET_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`;
 
 function parseCsv(text: string): string[][] {
