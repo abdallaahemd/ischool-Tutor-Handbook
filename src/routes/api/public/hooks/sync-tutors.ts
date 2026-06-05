@@ -85,11 +85,11 @@ export const Route = createFileRoute("/api/public/hooks/sync-tutors")({
     handlers: {
       GET: async () => {
         const result = await runSync();
-        return Response.json(result, { status: result.ok ? 200 : 500 });
+        return Response.json(result, { status: 200 });
       },
       POST: async () => {
         const result = await runSync();
-        return Response.json(result, { status: result.ok ? 200 : 500 });
+        return Response.json(result, { status: 200 });
       },
     },
   },
