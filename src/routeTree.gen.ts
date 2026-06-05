@@ -12,8 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TutorLoginRouteImport } from './routes/tutor.login'
 import { Route as RIdRouteImport } from './routes/r.$id'
 import { Route as CSlugRouteImport } from './routes/c.$slug'
+import { Route as ApiPublicHooksSyncTutorsRouteImport } from './routes/api/public/hooks/sync-tutors'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -30,6 +32,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TutorLoginRoute = TutorLoginRouteImport.update({
+  id: '/tutor/login',
+  path: '/tutor/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RIdRoute = RIdRouteImport.update({
   id: '/r/$id',
   path: '/r/$id',
@@ -40,6 +47,12 @@ const CSlugRoute = CSlugRouteImport.update({
   path: '/c/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksSyncTutorsRoute =
+  ApiPublicHooksSyncTutorsRouteImport.update({
+    id: '/api/public/hooks/sync-tutors',
+    path: '/api/public/hooks/sync-tutors',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -47,6 +60,8 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/c/$slug': typeof CSlugRoute
   '/r/$id': typeof RIdRoute
+  '/tutor/login': typeof TutorLoginRoute
+  '/api/public/hooks/sync-tutors': typeof ApiPublicHooksSyncTutorsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +69,8 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/c/$slug': typeof CSlugRoute
   '/r/$id': typeof RIdRoute
+  '/tutor/login': typeof TutorLoginRoute
+  '/api/public/hooks/sync-tutors': typeof ApiPublicHooksSyncTutorsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,13 +79,37 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/c/$slug': typeof CSlugRoute
   '/r/$id': typeof RIdRoute
+  '/tutor/login': typeof TutorLoginRoute
+  '/api/public/hooks/sync-tutors': typeof ApiPublicHooksSyncTutorsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/login' | '/c/$slug' | '/r/$id'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/login'
+    | '/c/$slug'
+    | '/r/$id'
+    | '/tutor/login'
+    | '/api/public/hooks/sync-tutors'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/login' | '/c/$slug' | '/r/$id'
-  id: '__root__' | '/' | '/admin' | '/login' | '/c/$slug' | '/r/$id'
+  to:
+    | '/'
+    | '/admin'
+    | '/login'
+    | '/c/$slug'
+    | '/r/$id'
+    | '/tutor/login'
+    | '/api/public/hooks/sync-tutors'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/login'
+    | '/c/$slug'
+    | '/r/$id'
+    | '/tutor/login'
+    | '/api/public/hooks/sync-tutors'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -77,6 +118,8 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   CSlugRoute: typeof CSlugRoute
   RIdRoute: typeof RIdRoute
+  TutorLoginRoute: typeof TutorLoginRoute
+  ApiPublicHooksSyncTutorsRoute: typeof ApiPublicHooksSyncTutorsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -102,6 +145,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/tutor/login': {
+      id: '/tutor/login'
+      path: '/tutor/login'
+      fullPath: '/tutor/login'
+      preLoaderRoute: typeof TutorLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/r/$id': {
       id: '/r/$id'
       path: '/r/$id'
@@ -116,6 +166,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/sync-tutors': {
+      id: '/api/public/hooks/sync-tutors'
+      path: '/api/public/hooks/sync-tutors'
+      fullPath: '/api/public/hooks/sync-tutors'
+      preLoaderRoute: typeof ApiPublicHooksSyncTutorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -125,6 +182,8 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   CSlugRoute: CSlugRoute,
   RIdRoute: RIdRoute,
+  TutorLoginRoute: TutorLoginRoute,
+  ApiPublicHooksSyncTutorsRoute: ApiPublicHooksSyncTutorsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
