@@ -156,6 +156,54 @@ export type Database = {
           },
         ]
       }
+      sync_logs: {
+        Row: {
+          error_message: string | null
+          id: string
+          records_processed: number
+          status: string
+          sync_time: string
+        }
+        Insert: {
+          error_message?: string | null
+          id?: string
+          records_processed?: number
+          status: string
+          sync_time?: string
+        }
+        Update: {
+          error_message?: string | null
+          id?: string
+          records_processed?: number
+          status?: string
+          sync_time?: string
+        }
+        Relationships: []
+      }
+      tutors: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          password_hash: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          password_hash: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          password_hash?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -189,12 +237,20 @@ export type Database = {
         }
         Returns: boolean
       }
+      sync_tutors_from_sheet: { Args: { _rows: Json }; Returns: number }
       verify_admin_login: {
         Args: { _email: string; _password: string }
         Returns: {
           email: string
           id: string
           name: string
+        }[]
+      }
+      verify_tutor_login: {
+        Args: { _email: string; _password: string }
+        Returns: {
+          email: string
+          id: string
         }[]
       }
     }
