@@ -180,26 +180,68 @@ export type Database = {
         }
         Relationships: []
       }
+      tutor_import_logs: {
+        Row: {
+          added_count: number
+          deleted_count: number
+          failed_count: number
+          filename: string | null
+          id: string
+          imported_at: string
+          imported_by: string | null
+          status: string
+          total_records: number
+          updated_count: number
+        }
+        Insert: {
+          added_count?: number
+          deleted_count?: number
+          failed_count?: number
+          filename?: string | null
+          id?: string
+          imported_at?: string
+          imported_by?: string | null
+          status?: string
+          total_records?: number
+          updated_count?: number
+        }
+        Update: {
+          added_count?: number
+          deleted_count?: number
+          failed_count?: number
+          filename?: string | null
+          id?: string
+          imported_at?: string
+          imported_by?: string | null
+          status?: string
+          total_records?: number
+          updated_count?: number
+        }
+        Relationships: []
+      }
       tutors: {
         Row: {
           created_at: string
-          email: string
           id: string
+          name: string
           password_hash: string
+          tutor_id: string
           updated_at: string
         }
         Insert: {
           created_at?: string
-          email: string
           id?: string
+          name?: string
           password_hash: string
+          tutor_id: string
           updated_at?: string
         }
         Update: {
           created_at?: string
-          email?: string
           id?: string
+          name?: string
           password_hash?: string
+          tutor_id?: string
           updated_at?: string
         }
         Relationships: []
@@ -237,7 +279,7 @@ export type Database = {
         }
         Returns: boolean
       }
-      sync_tutors_from_sheet: { Args: { _rows: Json }; Returns: number }
+      sync_tutors_from_sheet: { Args: { _rows: Json }; Returns: Json }
       verify_admin_login: {
         Args: { _email: string; _password: string }
         Returns: {
@@ -247,10 +289,11 @@ export type Database = {
         }[]
       }
       verify_tutor_login: {
-        Args: { _email: string; _password: string }
+        Args: { _password: string; _tutor_id: string }
         Returns: {
-          email: string
           id: string
+          name: string
+          tutor_id: string
         }[]
       }
     }

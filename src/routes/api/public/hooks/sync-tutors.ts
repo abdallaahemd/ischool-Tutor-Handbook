@@ -49,26 +49,29 @@ async function runSync() {
     if (rows.length === 0) throw new Error("Sheet is empty");
 
     const header = rows[0].map((h) => h.trim().toLowerCase());
-    const emailIdx = header.indexOf("email");
-    const passIdx = header.indexOf("password");
-    if (emailIdx === -1 || passIdx === -1)
-      throw new Error("Sheet must have 'Email' and 'Password' columns");
+    const idIdx = header.findIndex((h) => h === "id" || h === "tutor_id" || h === "tutor id");
+    const passIdx = header.findIndex((h) => h === "password");
+    const nameIdx = header.findIndex((h) => h === "name");
+    if (idIdx === -1 || passIdx === -1)
+      throw new Error("Sheet must have 'ID' and 'Password' columns");
 
     const payload = rows.slice(1).map((r) => ({
-      email: (r[emailIdx] ?? "").trim(),
-      password: (r[passIdx] ?? "").trim(),
-    })).filter((r) => r.email && r.password);
+      tutor_id: (r[idIdx] ?? "").trim(),
+      password: (r[passIdx] ?? "").trim() || "P@ssword_1234",
+      name: nameIdx >= 0 ? (r[nameIdx] ?? "").trim() : "",
+    })).filter((r) => r.tutor_id);
 
     const { data, error } = await supabaseAdmin.rpc("sync_tutors_from_sheet" as never, {
       _rows: payload,
     } as never);
     if (error) throw error;
 
+    const counts = (data as { processed?: number } | null) ?? {};
     await supabaseAdmin.from("sync_logs").insert({
       status: "success",
-      records_processed: (data as number) ?? payload.length,
+      records_processed: counts.processed ?? payload.length,
     });
-    return { ok: true, processed: payload.length };
+    return { ok: true, ...counts };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     await supabaseAdmin.from("sync_logs").insert({
