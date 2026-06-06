@@ -73,11 +73,12 @@ function Index() {
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3">
           <div className="text-sm">
             <div className="font-medium text-foreground">
-              Welcome, {session.tutor?.email}
+              Welcome, {session.tutor?.name || session.tutor?.tutor_id}
             </div>
             <div className="text-xs text-muted-foreground">
+              Tutor ID: {session.tutor?.tutor_id}
               {session.loggedInAt && (
-                <>Last login: {new Date(session.loggedInAt).toLocaleString()}</>
+                <> · Last login: {new Date(session.loggedInAt).toLocaleString()}</>
               )}
               {lastSync && (
                 <> · Last sync: {new Date(lastSync).toLocaleString()}</>

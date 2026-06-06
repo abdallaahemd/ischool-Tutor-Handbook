@@ -14,7 +14,7 @@ export const Route = createFileRoute("/tutor/login")({
 
 function TutorLoginPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const [tutorId, setTutorId] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState("");
@@ -27,26 +27,27 @@ function TutorLoginPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if (!email.trim() || !password) {
-      setError("Email and password are required.");
+    if (!tutorId.trim() || !password) {
+      setError("Tutor ID and password are required.");
       return;
     }
     setBusy(true);
     try {
       const { data, error: qErr } = await supabase.rpc(
         "verify_tutor_login" as never,
-        { _email: email.trim(), _password: password } as never,
+        { _tutor_id: tutorId.trim(), _password: password } as never,
       );
       if (qErr) throw qErr;
-      const rows = (data as Array<{ id: string; email: string }> | null) ?? [];
+      const rows =
+        (data as Array<{ id: string; tutor_id: string; name: string }> | null) ?? [];
       const row = rows[0];
       if (!row) {
-        setError("Invalid email or password");
+        setError("Invalid ID or password");
         setPassword("");
         return;
       }
       writeTutorSession({
-        tutor: { id: row.id, email: row.email },
+        tutor: { id: row.id, tutor_id: row.tutor_id, name: row.name },
         loggedInAt: new Date().toISOString(),
         loggedIn: true,
       });
@@ -75,14 +76,14 @@ function TutorLoginPage() {
           )}
           <div>
             <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Email
+              Tutor ID
             </label>
             <input
-              type="email"
+              type="text"
               required
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              placeholder="e.g. T-1004"
+              value={tutorId}
+              onChange={(e) => setTutorId(e.target.value)}
               className="mt-1 h-11 w-full rounded-md border border-border bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
             />
           </div>

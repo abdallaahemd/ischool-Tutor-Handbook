@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 export const TUTOR_SESSION_KEY = "ischool_tutor_session";
 
 export interface TutorSessionData {
-  tutor: { id: string; email: string };
+  tutor: { id: string; tutor_id: string; name: string };
   loggedInAt: string;
   loggedIn: boolean;
 }
