@@ -367,121 +367,164 @@ function CardsTab() {
   );
 }
 
-/* ---------- Materials ---------- */
-interface Material {
-  id: string;
-  title: string;
-  description: string;
-  category_id: string | null;
-  type: string;
-  url: string | null;
-  storage_path: string | null;
-  created_at: string;
+/* ---------- Tutors CSV Import ---------- */
+interface ParsedRow { tutor_id: string; password: string; name: string }
+interface ImportLog {
+  id: string; imported_at: string; filename: string | null;
+  total_records: number; added_count: number; updated_count: number;
+  deleted_count: number; failed_count: number; status: string;
 }
 
-function useMaterials() {
-  return useQuery({
-    queryKey: ["materials"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("materials")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data as Material[];
-    },
-  });
+function parseCsvText(text: string): string[][] {
+  const rows: string[][] = []; let cur: string[] = []; let field = ""; let q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) {
+      if (c === '"') { if (text[i + 1] === '"') { field += '"'; i++; } else q = false; }
+      else field += c;
+    } else if (c === '"') q = true;
+    else if (c === ",") { cur.push(field); field = ""; }
+    else if (c === "\n") { cur.push(field); rows.push(cur); cur = []; field = ""; }
+    else if (c !== "\r") field += c;
+  }
+  if (field.length || cur.length) { cur.push(field); rows.push(cur); }
+  return rows.filter((r) => r.some((v) => v && v.length));
 }
 
-function MaterialsTab() {
+function TutorsTab() {
   const qc = useQueryClient();
   const navigate = useNavigate();
-  const { data: materials = [] } = useMaterials();
-  const { data: categories = [] } = useCategories();
-  const [editing, setEditing] = useState<(Partial<Material> & { file?: File | null }) | null>(null);
+  const session = useAdminSession();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [filename, setFilename] = useState<string>("");
+  const [rows, setRows] = useState<ParsedRow[] | null>(null);
+  const [parseError, setParseError] = useState<string>("");
   const [busy, setBusy] = useState(false);
+  const importTutorsFn = useServerFn(importTutors);
+  const listLogsFn = useServerFn(listImportLogs);
 
-  const save = async () => {
-    if (!editing) return;
+  const { data: logsData } = useQuery({
+    queryKey: ["tutor_import_logs"],
+    queryFn: () => listLogsFn(),
+  });
+  const logs: ImportLog[] = (logsData?.logs ?? []) as ImportLog[];
+
+  const handleFile = async (file: File) => {
+    setParseError(""); setRows(null); setFilename(file.name);
+    if (!file.name.toLowerCase().endsWith(".csv")) {
+      setParseError("Only .csv files are allowed.");
+      return;
+    }
+    try {
+      const text = await file.text();
+      const grid = parseCsvText(text);
+      if (grid.length < 2) throw new Error("CSV must have a header row and at least one data row.");
+      const header = grid[0].map((h) => h.trim().toLowerCase());
+      const idIdx = header.findIndex((h) => h === "id" || h === "tutor_id" || h === "tutor id");
+      const passIdx = header.findIndex((h) => h === "password");
+      const nameIdx = header.findIndex((h) => h === "name");
+      if (idIdx === -1) throw new Error("CSV must contain an 'ID' column.");
+      if (nameIdx === -1) throw new Error("CSV must contain a 'Name' column.");
+      const seen = new Set<string>();
+      const parsed: ParsedRow[] = [];
+      for (const r of grid.slice(1)) {
+        const tutor_id = (r[idIdx] ?? "").trim().toUpperCase();
+        if (!tutor_id) continue;
+        if (seen.has(tutor_id)) throw new Error(`Duplicate tutor ID in CSV: ${tutor_id}`);
+        seen.add(tutor_id);
+        const password = passIdx >= 0 ? (r[passIdx] ?? "").trim() : "";
+        parsed.push({
+          tutor_id,
+          password: password || "P@ssword_1234",
+          name: (r[nameIdx] ?? "").trim(),
+        });
+      }
+      if (parsed.length === 0) throw new Error("No valid rows found in CSV.");
+      setRows(parsed);
+    } catch (err) {
+      setParseError(err instanceof Error ? err.message : "Failed to parse CSV");
+    }
+  };
+
+  const reset = () => {
+    setRows(null); setFilename(""); setParseError("");
+    if (fileRef.current) fileRef.current.value = "";
+  };
+
+  const runImport = async () => {
+    if (!rows) return;
     if (!requireAdmin(navigate)) return;
     setBusy(true);
     try {
-      let storage_path = editing.storage_path ?? null;
-      if (editing.file && (editing.type === "pdf" || editing.type === "video")) {
-        const path = `${Date.now()}-${editing.file.name}`;
-        const { error } = await supabase.storage.from("materials").upload(path, editing.file);
-        if (error) throw error;
-        storage_path = path;
-      }
-      const payload = {
-        title: editing.title ?? "",
-        description: editing.description ?? "",
-        category_id: editing.category_id || null,
-        type: editing.type ?? "link",
-        url: editing.type === "link" ? (editing.url ?? null) : null,
-        storage_path,
-      };
-      const { error } = editing.id
-        ? await supabase.from("materials").update(payload).eq("id", editing.id)
-        : await supabase.from("materials").insert(payload);
-      if (error) throw error;
-      toast.success(editing.id ? "Material updated" : "Material uploaded");
-      setEditing(null);
-      qc.invalidateQueries({ queryKey: ["materials"] });
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed";
-      console.error("Supabase error:", msg);
+      const result = await importTutorsFn({
+        data: { rows, filename, imported_by: session.admin?.email ?? null } as never,
+      });
+      toast.success(
+        `Import complete · Added ${result.added} · Updated ${result.updated} · Deleted ${result.deleted}`,
+      );
+      reset();
+      qc.invalidateQueries({ queryKey: ["tutor_import_logs"] });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Import failed";
       toast.error(msg);
     } finally {
       setBusy(false);
     }
   };
 
-  const remove = async (m: Material) => {
-    if (!requireAdmin(navigate)) return;
-    if (!confirm("Delete this material?")) return;
-    if (m.storage_path) await supabase.storage.from("materials").remove([m.storage_path]);
-    const { error } = await supabase.from("materials").delete().eq("id", m.id);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success("Material deleted");
-    qc.invalidateQueries({ queryKey: ["materials"] });
-  };
-
   return (
     <div>
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">Materials</h1>
-        <button onClick={() => setEditing({ type: "link" })} className="inline-flex items-center gap-2 rounded-md bg-primary px-3 h-9 text-sm font-medium text-primary-foreground hover:bg-blue-700">
-          <Plus className="h-4 w-4" /> Upload
+        <h1 className="text-2xl font-bold text-foreground">Tutors</h1>
+        <button
+          onClick={() => fileRef.current?.click()}
+          className="inline-flex items-center gap-2 rounded-md bg-primary px-3 h-9 text-sm font-medium text-primary-foreground hover:bg-blue-700"
+        >
+          <Upload className="h-4 w-4" /> Upload CSV
         </button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".csv,text/csv"
+          className="hidden"
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+        />
       </div>
-      <div className="mt-6 overflow-hidden rounded-xl border border-border bg-card">
+
+      {parseError && (
+        <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {parseError}
+        </div>
+      )}
+
+      <h2 className="mt-10 text-lg font-semibold text-foreground">Import History</h2>
+      <div className="mt-3 overflow-hidden rounded-xl border border-border bg-card">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
             <tr>
-              <th className="px-4 py-2 text-left">Title</th>
-              <th className="px-4 py-2 text-left">Category</th>
-              <th className="px-4 py-2 text-left">Type</th>
-              <th className="px-4 py-2 text-left">Date</th>
-              <th className="px-4 py-2"></th>
+              <th className="px-4 py-2 text-left">File Name</th>
+              <th className="px-4 py-2 text-left">Import Date</th>
+              <th className="px-4 py-2 text-left">Added</th>
+              <th className="px-4 py-2 text-left">Updated</th>
+              <th className="px-4 py-2 text-left">Deleted</th>
+              <th className="px-4 py-2 text-left">Status</th>
             </tr>
           </thead>
           <tbody>
-            {materials.length === 0 && (
-              <tr><td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">No materials uploaded yet.</td></tr>
+            {logs.length === 0 && (
+              <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">No imports yet.</td></tr>
             )}
-            {materials.map((m) => (
-              <tr key={m.id} className="border-t border-border">
-                <td className="px-4 py-2 font-medium text-foreground">{m.title}</td>
-                <td className="px-4 py-2 text-muted-foreground">{categories.find((c) => c.id === m.category_id)?.name ?? "—"}</td>
-                <td className="px-4 py-2 uppercase text-muted-foreground">{m.type}</td>
-                <td className="px-4 py-2 text-muted-foreground">{new Date(m.created_at).toLocaleDateString()}</td>
-                <td className="px-4 py-2 text-right">
-                  <button onClick={() => setEditing(m)} className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-muted"><Pencil className="h-4 w-4" /></button>
-                  <button onClick={() => remove(m)} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-destructive hover:bg-red-50"><Trash2 className="h-4 w-4" /></button>
+            {logs.map((l) => (
+              <tr key={l.id} className="border-t border-border">
+                <td className="px-4 py-2 font-medium text-foreground">{l.filename ?? "—"}</td>
+                <td className="px-4 py-2 text-muted-foreground">{new Date(l.imported_at).toLocaleString()}</td>
+                <td className="px-4 py-2 text-muted-foreground">{l.added_count}</td>
+                <td className="px-4 py-2 text-muted-foreground">{l.updated_count}</td>
+                <td className="px-4 py-2 text-muted-foreground">{l.deleted_count}</td>
+                <td className="px-4 py-2">
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${l.status === "success" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                    {l.status}
+                  </span>
                 </td>
               </tr>
             ))}
@@ -489,34 +532,51 @@ function MaterialsTab() {
         </table>
       </div>
 
-      {editing && (
-        <Modal title={editing.id ? "Edit material" : "Upload material"} onClose={() => setEditing(null)} onSave={save} busy={busy}>
-          <Field label="Title" value={editing.title ?? ""} onChange={(v) => setEditing({ ...editing, title: v })} />
-          <Field label="Description" value={editing.description ?? ""} onChange={(v) => setEditing({ ...editing, description: v })} />
-          <div>
-            <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Category</label>
-            <select value={editing.category_id ?? ""} onChange={(e) => setEditing({ ...editing, category_id: e.target.value })} className="mt-1 h-10 w-full rounded-md border border-border bg-background px-3 text-sm">
-              <option value="">— None —</option>
-              {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Type</label>
-            <select value={editing.type ?? "link"} onChange={(e) => setEditing({ ...editing, type: e.target.value })} className="mt-1 h-10 w-full rounded-md border border-border bg-background px-3 text-sm">
-              <option value="link">Link</option>
-              <option value="pdf">PDF</option>
-              <option value="video">Video</option>
-            </select>
-          </div>
-          {editing.type === "link" ? (
-            <Field label="URL" value={editing.url ?? ""} onChange={(v) => setEditing({ ...editing, url: v })} />
-          ) : (
-            <div>
-              <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">File</label>
-              <input type="file" onChange={(e) => setEditing({ ...editing, file: e.target.files?.[0] ?? null })} className="mt-1 block w-full text-sm" />
+      {rows && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-2xl rounded-2xl border border-border bg-card p-6 shadow-xl">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-foreground">Preview tutor import</h2>
+              <button onClick={reset} className="rounded p-1.5 hover:bg-muted"><X className="h-4 w-4" /></button>
             </div>
-          )}
-        </Modal>
+            <p className="mt-2 text-sm text-muted-foreground">
+              File: <span className="font-medium text-foreground">{filename}</span>
+              {" · "}Rows detected: <span className="font-medium text-foreground">{rows.length}</span>
+            </p>
+            <div className="mt-4 max-h-80 overflow-auto rounded-lg border border-border">
+              <table className="w-full text-sm">
+                <thead className="sticky top-0 bg-muted/70 text-xs uppercase tracking-wider text-muted-foreground">
+                  <tr>
+                    <th className="px-3 py-2 text-left">ID</th>
+                    <th className="px-3 py-2 text-left">Name</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.slice(0, 10).map((r) => (
+                    <tr key={r.tutor_id} className="border-t border-border">
+                      <td className="px-3 py-1.5 font-medium text-foreground">{r.tutor_id}</td>
+                      <td className="px-3 py-1.5 text-muted-foreground">{r.name}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {rows.length > 10 && (
+                <div className="border-t border-border px-3 py-2 text-xs text-muted-foreground">
+                  …and {rows.length - 10} more rows
+                </div>
+              )}
+            </div>
+            <div className="mt-4 rounded-md bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">
+              Importing will replace the tutors table. Tutors missing from this CSV will be deleted.
+            </div>
+            <div className="mt-5 flex justify-end gap-2">
+              <button onClick={reset} className="rounded-md border border-border bg-background px-3 h-9 text-sm hover:bg-muted">Cancel</button>
+              <button onClick={runImport} disabled={busy} className="rounded-md bg-primary px-3 h-9 text-sm font-medium text-primary-foreground hover:bg-blue-700 disabled:opacity-60">
+                {busy ? "Importing…" : "Import"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
