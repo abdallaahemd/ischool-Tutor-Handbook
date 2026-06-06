@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   LayoutDashboard,
@@ -26,6 +26,8 @@ import {
   type Card,
 } from "@/components/handbook/data";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { importTutors, listImportLogs } from "@/lib/tutors.functions";
 
 export const Route = createFileRoute("/admin")({
   component: AdminDashboard,
@@ -41,7 +43,7 @@ function requireAdmin(navigate: ReturnType<typeof useNavigate>): boolean {
   return true;
 }
 
-type Tab = "dashboard" | "categories" | "cards" | "materials";
+type Tab = "dashboard" | "categories" | "cards" | "tutors";
 
 function AdminDashboard() {
   const navigate = useNavigate();
@@ -78,7 +80,7 @@ function AdminDashboard() {
           <AdminNav active={tab === "dashboard"} onClick={() => setTab("dashboard")} icon={<LayoutDashboard className="h-4 w-4" />} label="Dashboard" />
           <AdminNav active={tab === "categories"} onClick={() => setTab("categories")} icon={<Folder className="h-4 w-4" />} label="Categories" />
           <AdminNav active={tab === "cards"} onClick={() => setTab("cards")} icon={<FileText className="h-4 w-4" />} label="Cards" />
-          <AdminNav active={tab === "materials"} onClick={() => setTab("materials")} icon={<Upload className="h-4 w-4" />} label="Materials" />
+          <AdminNav active={tab === "tutors"} onClick={() => setTab("tutors")} icon={<Upload className="h-4 w-4" />} label="Tutors" />
           <button onClick={logout} className="mt-6 inline-flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted">
             <LogOut className="h-4 w-4" /> Logout
           </button>
@@ -89,7 +91,7 @@ function AdminDashboard() {
         {tab === "dashboard" && <DashboardTab />}
         {tab === "categories" && <CategoriesTab />}
         {tab === "cards" && <CardsTab />}
-        {tab === "materials" && <MaterialsTab />}
+        {tab === "tutors" && <TutorsTab />}
       </main>
     </div>
   );
