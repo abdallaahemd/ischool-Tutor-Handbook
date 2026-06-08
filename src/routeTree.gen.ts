@@ -13,6 +13,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TutorLoginRouteImport } from './routes/tutor.login'
+import { Route as TutorChangePasswordRouteImport } from './routes/tutor.change-password'
 import { Route as RIdRouteImport } from './routes/r.$id'
 import { Route as CSlugRouteImport } from './routes/c.$slug'
 import { Route as ApiPublicHooksSyncTutorsRouteImport } from './routes/api/public/hooks/sync-tutors'
@@ -35,6 +36,11 @@ const IndexRoute = IndexRouteImport.update({
 const TutorLoginRoute = TutorLoginRouteImport.update({
   id: '/tutor/login',
   path: '/tutor/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TutorChangePasswordRoute = TutorChangePasswordRouteImport.update({
+  id: '/tutor/change-password',
+  path: '/tutor/change-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RIdRoute = RIdRouteImport.update({
@@ -60,6 +66,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/c/$slug': typeof CSlugRoute
   '/r/$id': typeof RIdRoute
+  '/tutor/change-password': typeof TutorChangePasswordRoute
   '/tutor/login': typeof TutorLoginRoute
   '/api/public/hooks/sync-tutors': typeof ApiPublicHooksSyncTutorsRoute
 }
@@ -69,6 +76,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/c/$slug': typeof CSlugRoute
   '/r/$id': typeof RIdRoute
+  '/tutor/change-password': typeof TutorChangePasswordRoute
   '/tutor/login': typeof TutorLoginRoute
   '/api/public/hooks/sync-tutors': typeof ApiPublicHooksSyncTutorsRoute
 }
@@ -79,6 +87,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/c/$slug': typeof CSlugRoute
   '/r/$id': typeof RIdRoute
+  '/tutor/change-password': typeof TutorChangePasswordRoute
   '/tutor/login': typeof TutorLoginRoute
   '/api/public/hooks/sync-tutors': typeof ApiPublicHooksSyncTutorsRoute
 }
@@ -90,6 +99,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/c/$slug'
     | '/r/$id'
+    | '/tutor/change-password'
     | '/tutor/login'
     | '/api/public/hooks/sync-tutors'
   fileRoutesByTo: FileRoutesByTo
@@ -99,6 +109,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/c/$slug'
     | '/r/$id'
+    | '/tutor/change-password'
     | '/tutor/login'
     | '/api/public/hooks/sync-tutors'
   id:
@@ -108,6 +119,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/c/$slug'
     | '/r/$id'
+    | '/tutor/change-password'
     | '/tutor/login'
     | '/api/public/hooks/sync-tutors'
   fileRoutesById: FileRoutesById
@@ -118,6 +130,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   CSlugRoute: typeof CSlugRoute
   RIdRoute: typeof RIdRoute
+  TutorChangePasswordRoute: typeof TutorChangePasswordRoute
   TutorLoginRoute: typeof TutorLoginRoute
   ApiPublicHooksSyncTutorsRoute: typeof ApiPublicHooksSyncTutorsRoute
 }
@@ -152,6 +165,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TutorLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/tutor/change-password': {
+      id: '/tutor/change-password'
+      path: '/tutor/change-password'
+      fullPath: '/tutor/change-password'
+      preLoaderRoute: typeof TutorChangePasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/r/$id': {
       id: '/r/$id'
       path: '/r/$id'
@@ -182,9 +202,20 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   CSlugRoute: CSlugRoute,
   RIdRoute: RIdRoute,
+  TutorChangePasswordRoute: TutorChangePasswordRoute,
   TutorLoginRoute: TutorLoginRoute,
   ApiPublicHooksSyncTutorsRoute: ApiPublicHooksSyncTutorsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
