@@ -1,5 +1,5 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FolderOpen } from "lucide-react";
 import { HandbookLayout } from "@/components/handbook/HandbookLayout";
 import { ResourceCard } from "@/components/handbook/ResourceCard";
@@ -20,6 +20,10 @@ function CategoryPage() {
   const category = categories.find((c) => c.slug === slug);
   const { data: cards = [], isLoading } = useCardsByCategory(category?.id);
   const [openedCard, setOpenedCard] = useState<Card | null>(null);
+
+  useEffect(() => {
+    setOpenedCard(null);
+  }, [slug]);
 
   if (categories.length > 0 && !category) throw notFound();
 
