@@ -223,6 +223,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          must_change_password: boolean
           name: string
           password_hash: string
           tutor_id: string
@@ -231,6 +232,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          must_change_password?: boolean
           name?: string
           password_hash: string
           tutor_id: string
@@ -239,6 +241,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          must_change_password?: boolean
           name?: string
           password_hash?: string
           tutor_id?: string
@@ -272,6 +275,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      change_tutor_password: {
+        Args: {
+          _current_password: string
+          _new_password: string
+          _tutor_id: string
+        }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -292,6 +303,7 @@ export type Database = {
         Args: { _password: string; _tutor_id: string }
         Returns: {
           id: string
+          must_change_password: boolean
           name: string
           tutor_id: string
         }[]
