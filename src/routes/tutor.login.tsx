@@ -7,6 +7,7 @@ import {
   readTutorSession,
   writeTutorSession,
 } from "@/components/tutor/useTutorSession";
+import { AnimatedBackground } from "@/components/tutor/AnimatedBackground";
 
 export const Route = createFileRoute("/tutor/login")({
   component: TutorLoginPage,
@@ -39,11 +40,25 @@ function TutorLoginPage() {
       );
       if (qErr) throw qErr;
       const rows =
-        (data as Array<{ id: string; tutor_id: string; name: string }> | null) ?? [];
+        (data as Array<{ id: string; tutor_id: string; name: string; must_change_password?: boolean }> | null) ?? [];
       const row = rows[0];
       if (!row) {
         setError("Invalid ID or password");
         setPassword("");
+        return;
+      }
+      if (row.must_change_password) {
+        // Stash a short-lived handoff for the change-password page
+        sessionStorage.setItem(
+          "ischool_tutor_pw_change",
+          JSON.stringify({
+            id: row.id,
+            tutor_id: row.tutor_id,
+            name: row.name,
+            current_password: password,
+          }),
+        );
+        navigate({ to: "/tutor/change-password" });
         return;
       }
       writeTutorSession({
@@ -61,8 +76,9 @@ function TutorLoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-xl">
+    <AnimatedBackground>
+      <div className="flex min-h-screen items-center justify-center p-4">
+      <div className="w-full max-w-md rounded-2xl border border-white/60 bg-white/55 p-8 shadow-[0_20px_60px_-20px_rgba(80,90,140,0.35)] backdrop-blur-xl">
         <div className="flex flex-col items-center text-center">
           <LogoMark size={48} />
           <h1 className="mt-4 text-xl font-bold text-foreground">Tutor Login</h1>
@@ -120,6 +136,7 @@ function TutorLoginPage() {
           </button>
         </form>
       </div>
-    </div>
+      </div>
+    </AnimatedBackground>
   );
 }
