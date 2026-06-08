@@ -15,7 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "iSchool Instructor Handbook" },
+      { title: "iSchool Tutor Handbook." },
       { name: "description", content: "Everything tutors need — systems, sessions, policies, materials and more." },
     ],
   }),

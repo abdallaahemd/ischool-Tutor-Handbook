@@ -10,6 +10,7 @@ import {
 
 import appCss from "../styles.css?url";
 import { Toaster } from "@/components/ui/sonner";
+import faviconAsset from "@/assets/ischool-favicon.png.asset.json";
 
 function NotFoundComponent() {
   return (
@@ -73,15 +74,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
+      { title: "iSchool Tutor Handbook." },
       { name: "description", content: "iSchool Instructor Handbook is a SPA for tutors, offering a central dashboard for resources and an admin system." },
       { name: "author", content: "iSchool" },
-      { property: "og:title", content: "Lovable App" },
+      { property: "og:title", content: "iSchool Tutor Handbook." },
       { property: "og:description", content: "iSchool Instructor Handbook is a SPA for tutors, offering a central dashboard for resources and an admin system." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
-      { name: "twitter:title", content: "Lovable App" },
+      { name: "twitter:title", content: "iSchool Tutor Handbook." },
       { name: "twitter:description", content: "iSchool Instructor Handbook is a SPA for tutors, offering a central dashboard for resources and an admin system." },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/d1330ee6-e7ee-4ca8-be10-2879038a2b24/id-preview-4122c183--ccf37f61-7ea8-4b87-b6a3-f54331553a96.lovable.app-1779649286395.png" },
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/d1330ee6-e7ee-4ca8-be10-2879038a2b24/id-preview-4122c183--ccf37f61-7ea8-4b87-b6a3-f54331553a96.lovable.app-1779649286395.png" },
@@ -91,6 +92,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
+      { rel: "icon", type: "image/png", href: faviconAsset.url },
+      { rel: "apple-touch-icon", href: faviconAsset.url },
     ],
   }),
   shellComponent: RootShell,
