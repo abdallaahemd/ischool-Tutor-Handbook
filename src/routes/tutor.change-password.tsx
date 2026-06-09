@@ -53,7 +53,7 @@ function ChangePasswordPage() {
       setError("Passwords do not match.");
       return;
     }
-    if (pw === "P@ssword_1234") {
+    if (pw === "TutorPassword" || pw === "P@ssword_1234") {
       setError("You cannot use the default password.");
       return;
     }
