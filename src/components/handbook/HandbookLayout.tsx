@@ -1,9 +1,10 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { Home, Menu, Search, X } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { LogoFull, LogoMark } from "./Logo";
 import { Icon } from "./Icon";
 import { useCategories, useAllCards } from "./data";
+import { useTutorSession } from "@/components/tutor/useTutorSession";
 
 export function HandbookLayout({
   children,
@@ -18,6 +19,28 @@ export function HandbookLayout({
   const { data: categories = [] } = useCategories();
   const { data: allCards = [] } = useAllCards();
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const navigate = useNavigate();
+  const session = useTutorSession();
+
+  // Global guard for all protected tutor pages.
+  useEffect(() => {
+    if (session.loading) return;
+    if (!session.isTutor) {
+      // If a password-change handoff is pending, send them there; otherwise login.
+      const pending =
+        typeof window !== "undefined" &&
+        !!sessionStorage.getItem("ischool_tutor_pw_change");
+      navigate({ to: pending ? "/tutor/change-password" : "/tutor/login" });
+    }
+  }, [session.loading, session.isTutor, navigate]);
+
+  if (session.loading || !session.isTutor) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-sm text-muted-foreground">Loading…</div>
+      </div>
+    );
+  }
 
   const filtered = query.trim()
     ? allCards

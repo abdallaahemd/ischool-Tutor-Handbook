@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PdfModal } from "@/components/handbook/PdfModal";
+import { useTutorSession } from "@/components/tutor/useTutorSession";
 
 export const Route = createFileRoute("/r/$id")({
   component: ResourceViewer,
@@ -10,8 +11,19 @@ export const Route = createFileRoute("/r/$id")({
 function ResourceViewer() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
+  const session = useTutorSession();
   const [card, setCard] = useState<{ open_link: string; header: string } | null>(null);
   const [notFound, setNotFound] = useState(false);
+
+  useEffect(() => {
+    if (session.loading) return;
+    if (!session.isTutor) {
+      const pending =
+        typeof window !== "undefined" &&
+        !!sessionStorage.getItem("ischool_tutor_pw_change");
+      navigate({ to: pending ? "/tutor/change-password" : "/tutor/login" });
+    }
+  }, [session.loading, session.isTutor, navigate]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => e.preventDefault();
