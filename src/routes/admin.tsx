@@ -28,6 +28,12 @@ import {
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { importTutors, listImportLogs } from "@/lib/tutors.functions";
+import {
+  upsertCategory,
+  deleteCategory as deleteCategoryFn,
+  upsertCard,
+  deleteCard as deleteCardFn,
+} from "@/lib/admin-crud.functions";
 
 export const Route = createFileRoute("/admin")({
   component: AdminDashboard,
@@ -155,26 +161,30 @@ function Stat({ label, value }: { label: string; value: number }) {
 function CategoriesTab() {
   const qc = useQueryClient();
   const navigate = useNavigate();
+  const session = useAdminSession();
   const { data: categories = [] } = useCategories();
   const { data: cards = [] } = useAllCards();
   const [editing, setEditing] = useState<Partial<Category> | null>(null);
+  const upsertCategoryFn = useServerFn(upsertCategory);
+  const removeCategoryFn = useServerFn(deleteCategoryFn);
 
   const save = async () => {
     if (!editing) return;
     if (!requireAdmin(navigate)) return;
-    const payload = {
-      name: editing.name ?? "",
-      slug: editing.slug ?? "",
-      icon: editing.icon ?? "Folder",
-      description: editing.description ?? "",
-      order: editing.order ?? 0,
-    };
-    const { error } = editing.id
-      ? await supabase.from("categories").update(payload).eq("id", editing.id)
-      : await supabase.from("categories").insert(payload);
-    if (error) {
-      console.error("Supabase error:", error.message);
-      toast.error(error.message);
+    try {
+      await upsertCategoryFn({
+        data: {
+          admin_id: session.admin?.id ?? "",
+          id: editing.id,
+          name: editing.name ?? "",
+          slug: editing.slug ?? "",
+          icon: editing.icon ?? "Folder",
+          description: editing.description ?? "",
+          order: editing.order ?? 0,
+        } as never,
+      });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Save failed");
       return;
     }
     toast.success(editing.id ? "Category updated" : "Category created");
@@ -185,10 +195,12 @@ function CategoriesTab() {
   const remove = async (id: string) => {
     if (!requireAdmin(navigate)) return;
     if (!confirm("Delete this category?")) return;
-    const { error } = await supabase.from("categories").delete().eq("id", id);
-    if (error) {
-      console.error("Supabase error:", error.message);
-      toast.error(error.message);
+    try {
+      await removeCategoryFn({
+        data: { admin_id: session.admin?.id ?? "", id } as never,
+      });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Delete failed");
       return;
     }
     toast.success("Category deleted");
@@ -250,32 +262,36 @@ function CategoriesTab() {
 function CardsTab() {
   const qc = useQueryClient();
   const navigate = useNavigate();
+  const session = useAdminSession();
   const { data: categories = [] } = useCategories();
   const { data: cards = [] } = useAllCards();
   const [filter, setFilter] = useState<string>("");
   const [editing, setEditing] = useState<Partial<Card> | null>(null);
+  const upsertCardFn = useServerFn(upsertCard);
+  const removeCardFn = useServerFn(deleteCardFn);
 
   const filtered = filter ? cards.filter((c) => c.category_id === filter) : cards;
 
   const save = async () => {
     if (!editing) return;
     if (!requireAdmin(navigate)) return;
-    const payload = {
-      category_id: editing.category_id!,
-      header: editing.header ?? "",
-      body: editing.body ?? "",
-      icon_style: editing.icon_style ?? "link",
-      icon: editing.icon ?? "Link2",
-      view_link: editing.view_link || null,
-      open_link: editing.open_link ?? "",
-      order: editing.order ?? 0,
-    };
-    const { error } = editing.id
-      ? await supabase.from("cards").update(payload).eq("id", editing.id)
-      : await supabase.from("cards").insert(payload);
-    if (error) {
-      console.error("Supabase error:", error.message);
-      toast.error(error.message);
+    try {
+      await upsertCardFn({
+        data: {
+          admin_id: session.admin?.id ?? "",
+          id: editing.id,
+          category_id: editing.category_id!,
+          header: editing.header ?? "",
+          body: editing.body ?? "",
+          icon_style: editing.icon_style ?? "link",
+          icon: editing.icon ?? "Link2",
+          view_link: editing.view_link || null,
+          open_link: editing.open_link ?? "",
+          order: editing.order ?? 0,
+        } as never,
+      });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Save failed");
       return;
     }
     toast.success(editing.id ? "Card updated" : "Card created");
@@ -286,10 +302,12 @@ function CardsTab() {
   const remove = async (id: string) => {
     if (!requireAdmin(navigate)) return;
     if (!confirm("Delete this card?")) return;
-    const { error } = await supabase.from("cards").delete().eq("id", id);
-    if (error) {
-      console.error("Supabase error:", error.message);
-      toast.error(error.message);
+    try {
+      await removeCardFn({
+        data: { admin_id: session.admin?.id ?? "", id } as never,
+      });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Delete failed");
       return;
     }
     toast.success("Card deleted");
