@@ -1,0 +1,81 @@
+{
+  "version": 1,
+  "sdk_version": "0.20.0",
+  "path": "/mcp",
+  "auth": {
+    "type": "none"
+  },
+  "mcp": {
+    "server": {
+      "name": "ischool-tutor-handbook-mcp",
+      "version": "0.1.0",
+      "title": "iSchool Tutor Handbook MCP"
+    },
+    "tools": [
+      {
+        "name": "list_categories",
+        "title": "List handbook categories",
+        "description": "List all iSchool Tutor Handbook categories (name, slug, description, order).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_cards",
+        "title": "List handbook resource cards",
+        "description": "List resource cards in the iSchool Tutor Handbook. Optionally filter by category slug.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "category_slug": {
+              "type": "string",
+              "description": "Optional category slug (e.g. 'cs-cases') to filter cards."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "search_resources",
+        "title": "Search handbook resources",
+        "description": "Search resource cards in the iSchool Tutor Handbook by matching text in the header or body.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Search text to match against card header/body."
+            }
+          },
+          "required": [
+            "query"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
