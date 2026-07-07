@@ -12,14 +12,9 @@ export function ResourceCard({
   const isPdf = card.icon_style === "pdf";
   const isVideo = card.icon_style === "video";
   const isSheet = /docs\.google\.com\/spreadsheets\//.test(card.open_link);
-  const isLink = card.icon_style === "link" && !isSheet;
 
   const handleClick = () => {
-    if (isPdf || isVideo || isSheet) {
-      onOpen(card);
-      return;
-    }
-    window.location.href = card.open_link;
+    onOpen(card);
   };
 
   const commonClass =
@@ -69,14 +64,6 @@ export function ResourceCard({
       </div>
     </>
   );
-
-  if (isLink) {
-    return (
-      <a href={card.open_link} target="_self" className={commonClass}>
-        {inner}
-      </a>
-    );
-  }
 
   return (
     <button onClick={handleClick} className={commonClass}>
