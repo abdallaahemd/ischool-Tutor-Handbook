@@ -11,7 +11,9 @@ export interface TutorSessionData {
 export function readTutorSession(): TutorSessionData | null {
   if (typeof window === "undefined") return null;
   try {
-    const raw = sessionStorage.getItem(TUTOR_SESSION_KEY);
+    const raw =
+      localStorage.getItem(TUTOR_SESSION_KEY) ??
+      sessionStorage.getItem(TUTOR_SESSION_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as TutorSessionData;
     if (!parsed?.loggedIn || !parsed?.tutor?.id) return null;
@@ -21,13 +23,21 @@ export function readTutorSession(): TutorSessionData | null {
   }
 }
 
-export function writeTutorSession(data: TutorSessionData) {
-  sessionStorage.setItem(TUTOR_SESSION_KEY, JSON.stringify(data));
+export function writeTutorSession(data: TutorSessionData, remember = false) {
+  const serialized = JSON.stringify(data);
+  if (remember) {
+    localStorage.setItem(TUTOR_SESSION_KEY, serialized);
+    sessionStorage.removeItem(TUTOR_SESSION_KEY);
+  } else {
+    sessionStorage.setItem(TUTOR_SESSION_KEY, serialized);
+    localStorage.removeItem(TUTOR_SESSION_KEY);
+  }
   window.dispatchEvent(new Event("tutor-session-change"));
 }
 
 export function clearTutorSession() {
   sessionStorage.removeItem(TUTOR_SESSION_KEY);
+  localStorage.removeItem(TUTOR_SESSION_KEY);
   window.dispatchEvent(new Event("tutor-session-change"));
 }
 
