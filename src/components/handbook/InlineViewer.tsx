@@ -1,4 +1,4 @@
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ExternalLink } from "lucide-react";
 import { useState } from "react";
 import type { Card } from "./data";
 import { PdfViewer } from "./PdfViewer";
@@ -15,16 +15,29 @@ export function InlineViewer({ card, onBack }: { card: Card; onBack: () => void 
   const isPdf = card.icon_style === "pdf";
   const isVideo = card.icon_style === "video";
   const isSheet = /docs\.google\.com\/spreadsheets\//.test(card.open_link);
+  const isEmbeddableLink = !isPdf && !isVideo && !isSheet;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 md:px-8">
-      <button
-        onClick={onBack}
-        className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 mb-4"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Go back
-      </button>
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <button
+          onClick={onBack}
+          className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Go back
+        </button>
+        {isEmbeddableLink && (
+          <a
+            href={card.open_link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 h-9 text-xs font-medium text-primary-foreground shadow transition hover:bg-blue-700"
+          >
+            Open website <ExternalLink className="h-3.5 w-3.5" />
+          </a>
+        )}
+      </div>
       <h1 className="mb-4 text-xl font-semibold text-foreground md:text-2xl">
         {card.header}
       </h1>
@@ -54,8 +67,16 @@ export function InlineViewer({ card, onBack }: { card: Card; onBack: () => void 
           />
         </div>
       )}
-      {!isPdf && !isVideo && !isSheet && (
-        <div className="text-sm text-muted-foreground">Unsupported resource type.</div>
+      {isEmbeddableLink && (
+        <div style={{ width: "100%", height: "calc(100vh - 160px)", overflow: "hidden", borderRadius: 12 }}>
+          <iframe
+            src={card.open_link}
+            title={card.header}
+            className="h-full w-full border border-border bg-background"
+            style={{ borderRadius: 12 }}
+            sandbox="allow-forms allow-scripts allow-same-origin allow-popups"
+          />
+        </div>
       )}
     </div>
   );
