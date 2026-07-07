@@ -18,6 +18,7 @@ function TutorLoginPage() {
   const [tutorId, setTutorId] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
+  const [remember, setRemember] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -61,11 +62,14 @@ function TutorLoginPage() {
         navigate({ to: "/tutor/change-password" });
         return;
       }
-      writeTutorSession({
-        tutor: { id: row.id, tutor_id: row.tutor_id, name: row.name },
-        loggedInAt: new Date().toISOString(),
-        loggedIn: true,
-      });
+      writeTutorSession(
+        {
+          tutor: { id: row.id, tutor_id: row.tutor_id, name: row.name },
+          loggedInAt: new Date().toISOString(),
+          loggedIn: true,
+        },
+        remember,
+      );
       navigate({ to: "/" });
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Login failed");
@@ -126,6 +130,15 @@ function TutorLoginPage() {
               </button>
             </div>
           </div>
+          <label className="flex items-center gap-2 text-sm text-muted-foreground select-none cursor-pointer">
+            <input
+              type="checkbox"
+              checked={remember}
+              onChange={(e) => setRemember(e.target.checked)}
+              className="h-4 w-4 rounded border-border accent-primary"
+            />
+            Remember me
+          </label>
           <button
             type="submit"
             disabled={busy}
