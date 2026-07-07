@@ -2,6 +2,7 @@ import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import type { Card } from "./data";
 import { PdfViewer } from "./PdfViewer";
+import { SheetTable } from "./SheetTable";
 
 function toDirectUrl(driveUrl: string): string {
   const match = driveUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
@@ -14,13 +15,6 @@ export function InlineViewer({ card, onBack }: { card: Card; onBack: () => void 
   const isPdf = card.icon_style === "pdf";
   const isVideo = card.icon_style === "video";
   const isSheet = /docs\.google\.com\/spreadsheets\//.test(card.open_link);
-  const sheetPreview = (() => {
-    const m = card.open_link.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
-    if (!m) return card.open_link;
-    const gidMatch = card.open_link.match(/[?#&]gid=(\d+)/);
-    const gid = gidMatch ? `?gid=${gidMatch[1]}` : "";
-    return `https://docs.google.com/spreadsheets/d/${m[1]}/preview${gid}`;
-  })();
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 md:px-8">
@@ -35,27 +29,7 @@ export function InlineViewer({ card, onBack }: { card: Card; onBack: () => void 
         {card.header}
       </h1>
       {isPdf && <PdfViewer driveUrl={card.open_link} />}
-      {isSheet && (
-        <div style={{ position: "relative", width: "100%", height: "calc(100vh - 120px)", overflow: "hidden", borderRadius: 12 }}>
-          <iframe
-            src={sheetPreview}
-            title={card.header}
-            style={{ width: "100%", height: "100%", border: "none", borderRadius: 12, backgroundColor: "#fff" }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              top: 0,
-              right: 0,
-              width: 80,
-              height: 60,
-              backgroundColor: "hsl(var(--background))",
-              zIndex: 9999,
-              pointerEvents: "all",
-            }}
-          />
-        </div>
-      )}
+      {isSheet && <SheetTable openLink={card.open_link} />}
       {isVideo && (
         <div style={{ position: "relative", width: "100%", height: "calc(100vh - 120px)" }}>
           {videoLoading && (
