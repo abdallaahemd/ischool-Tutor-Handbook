@@ -1,6 +1,10 @@
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, FolderOpen } from "lucide-react";
 import { Icon } from "./Icon";
 import type { Card } from "./data";
+
+export function isDriveFolderLink(url: string): boolean {
+  return /drive\.google\.com\/(drive\/folders|folderview)/.test(url);
+}
 
 export function ResourceCard({
   card,
@@ -12,21 +16,36 @@ export function ResourceCard({
   const isPdf = card.icon_style === "pdf";
   const isVideo = card.icon_style === "video";
   const isSheet = /docs\.google\.com\/spreadsheets\//.test(card.open_link);
+  const isDrive = isDriveFolderLink(card.open_link);
 
   const handleClick = () => {
+    if (isDrive) {
+      window.open(card.open_link, "_blank", "noopener,noreferrer");
+      return;
+    }
     onOpen(card);
   };
 
   const commonClass =
     "group relative flex flex-col rounded-2xl border border-border bg-card p-5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_8px_30px_-12px_rgba(37,99,235,0.25)]";
 
-  const badgeLabel = isPdf ? "PDF" : isVideo ? "VIDEO" : isSheet ? "SHEET" : "LINK";
+  const badgeLabel = isPdf
+    ? "PDF"
+    : isVideo
+    ? "VIDEO"
+    : isSheet
+    ? "SHEET"
+    : isDrive
+    ? "DRIVE"
+    : "LINK";
   const accentClass = isPdf
     ? "bg-orange-100 text-orange-600"
     : isVideo
     ? "bg-purple-100 text-purple-600"
     : isSheet
     ? "bg-green-100 text-green-700"
+    : isDrive
+    ? "bg-yellow-100 text-yellow-700"
     : "bg-blue-100 text-blue-600";
   const iconAccent = isPdf
     ? "bg-orange-100 text-orange-500"
@@ -34,6 +53,8 @@ export function ResourceCard({
     ? "bg-purple-100 text-purple-600"
     : isSheet
     ? "bg-green-100 text-green-600"
+    : isDrive
+    ? "bg-yellow-100 text-yellow-600"
     : "bg-blue-100 text-blue-600";
 
   const inner = (
@@ -42,7 +63,7 @@ export function ResourceCard({
         <div
           className={`flex h-10 w-10 items-center justify-center rounded-xl transition-transform duration-200 group-hover:scale-110 ${iconAccent}`}
         >
-          <Icon name={card.icon} size={20} />
+          {isDrive ? <FolderOpen size={20} /> : <Icon name={card.icon} size={20} />}
         </div>
         <span
           className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${accentClass}`}
@@ -57,7 +78,9 @@ export function ResourceCard({
         {card.body}
       </p>
       <div className="mt-5 flex items-center justify-between">
-        <span className="text-xs text-muted-foreground">Tap to open</span>
+        <span className="text-xs text-muted-foreground">
+          {isDrive ? "Opens in new tab" : "Tap to open"}
+        </span>
         <span className="inline-flex items-center gap-1 rounded-md bg-primary px-3 h-8 text-xs font-medium text-primary-foreground shadow transition hover:bg-blue-700">
           Open <ArrowUpRight className="h-3.5 w-3.5" />
         </span>
