@@ -20,6 +20,7 @@ import { Route as CSlugRouteImport } from './routes/c.$slug'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as ApiPublicHooksSyncTutorsRouteImport } from './routes/api/public/hooks/sync-tutors'
 
 const McpRoute = McpRouteImport.update({
@@ -80,6 +81,11 @@ const Char91DotmcpChar93InvokeToolToolRoute =
     path: '/.mcp/invoke-tool/$tool',
     getParentRoute: () => rootRouteImport,
   } as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksSyncTutorsRoute =
   ApiPublicHooksSyncTutorsRouteImport.update({
     id: '/api/public/hooks/sync-tutors',
@@ -98,6 +104,7 @@ export interface FileRoutesByFullPath {
   '/r/$id': typeof RIdRoute
   '/tutor/change-password': typeof TutorChangePasswordRoute
   '/tutor/login': typeof TutorLoginRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/hooks/sync-tutors': typeof ApiPublicHooksSyncTutorsRoute
 }
@@ -112,6 +119,7 @@ export interface FileRoutesByTo {
   '/r/$id': typeof RIdRoute
   '/tutor/change-password': typeof TutorChangePasswordRoute
   '/tutor/login': typeof TutorLoginRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/hooks/sync-tutors': typeof ApiPublicHooksSyncTutorsRoute
 }
@@ -127,6 +135,7 @@ export interface FileRoutesById {
   '/r/$id': typeof RIdRoute
   '/tutor/change-password': typeof TutorChangePasswordRoute
   '/tutor/login': typeof TutorLoginRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/hooks/sync-tutors': typeof ApiPublicHooksSyncTutorsRoute
 }
@@ -143,6 +152,7 @@ export interface FileRouteTypes {
     | '/r/$id'
     | '/tutor/change-password'
     | '/tutor/login'
+    | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/hooks/sync-tutors'
   fileRoutesByTo: FileRoutesByTo
@@ -157,6 +167,7 @@ export interface FileRouteTypes {
     | '/r/$id'
     | '/tutor/change-password'
     | '/tutor/login'
+    | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/hooks/sync-tutors'
   id:
@@ -171,6 +182,7 @@ export interface FileRouteTypes {
     | '/r/$id'
     | '/tutor/change-password'
     | '/tutor/login'
+    | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/hooks/sync-tutors'
   fileRoutesById: FileRoutesById
@@ -186,6 +198,7 @@ export interface RootRouteChildren {
   RIdRoute: typeof RIdRoute
   TutorChangePasswordRoute: typeof TutorChangePasswordRoute
   TutorLoginRoute: typeof TutorLoginRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicHooksSyncTutorsRoute: typeof ApiPublicHooksSyncTutorsRoute
 }
@@ -269,6 +282,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/sync-tutors': {
       id: '/api/public/hooks/sync-tutors'
       path: '/api/public/hooks/sync-tutors'
@@ -291,6 +311,7 @@ const rootRouteChildren: RootRouteChildren = {
   RIdRoute: RIdRoute,
   TutorChangePasswordRoute: TutorChangePasswordRoute,
   TutorLoginRoute: TutorLoginRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicHooksSyncTutorsRoute: ApiPublicHooksSyncTutorsRoute,
 }
