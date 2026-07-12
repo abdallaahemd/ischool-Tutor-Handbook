@@ -3,7 +3,7 @@ import { Icon } from "./Icon";
 import type { Card } from "./data";
 
 export function isDriveFolderLink(url: string): boolean {
-  return /drive\.google\.com\/(drive\/folders|folderview)/.test(url);
+  return /drive\.google\.com\/(?:drive\/(?:u\/\d+\/)?folders|folderview)/.test(url);
 }
 
 export function ResourceCard({

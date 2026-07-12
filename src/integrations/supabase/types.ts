@@ -49,6 +49,7 @@ export type Database = {
           id: string
           open_link: string
           order: number
+          sheet_filters: string[]
           view_link: string | null
         }
         Insert: {
@@ -61,6 +62,7 @@ export type Database = {
           id?: string
           open_link: string
           order?: number
+          sheet_filters?: string[]
           view_link?: string | null
         }
         Update: {
@@ -73,6 +75,7 @@ export type Database = {
           id?: string
           open_link?: string
           order?: number
+          sheet_filters?: string[]
           view_link?: string | null
         }
         Relationships: [

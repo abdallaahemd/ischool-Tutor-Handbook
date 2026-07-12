@@ -61,6 +61,7 @@ export interface CardInput {
   view_link: string | null;
   open_link: string;
   order: number;
+  sheet_filters?: string[];
 }
 
 export const upsertCard = createServerFn({ method: "POST" })
@@ -76,6 +77,7 @@ export const upsertCard = createServerFn({ method: "POST" })
       view_link: data.view_link,
       open_link: data.open_link,
       order: data.order,
+      sheet_filters: data.sheet_filters ?? [],
     };
     const { data: row, error } = data.id
       ? await db.from("cards").update(payload).eq("id", data.id).select().maybeSingle()

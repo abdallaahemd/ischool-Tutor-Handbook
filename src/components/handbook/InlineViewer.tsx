@@ -42,7 +42,9 @@ export function InlineViewer({ card, onBack }: { card: Card; onBack: () => void 
         {card.header}
       </h1>
       {isPdf && <PdfViewer driveUrl={card.open_link} />}
-      {isSheet && <SheetTable openLink={card.open_link} />}
+      {isSheet && (
+        <SheetTable openLink={card.open_link} filterHeaders={card.sheet_filters ?? []} />
+      )}
       {isVideo && (
         <div style={{ position: "relative", width: "100%", height: "calc(100vh - 120px)" }}>
           {videoLoading && (

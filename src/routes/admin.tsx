@@ -288,6 +288,7 @@ function CardsTab() {
           view_link: editing.view_link || null,
           open_link: editing.open_link ?? "",
           order: editing.order ?? 0,
+          sheet_filters: editing.sheet_filters ?? [],
         } as never,
       });
     } catch (err) {
@@ -379,6 +380,21 @@ function CardsTab() {
           <Field label="View link (optional)" value={editing.view_link ?? ""} onChange={(v) => setEditing({ ...editing, view_link: v })} />
           <Field label="Open link" value={editing.open_link ?? ""} onChange={(v) => setEditing({ ...editing, open_link: v })} />
           <Field label="Order" type="number" value={String(editing.order ?? 0)} onChange={(v) => setEditing({ ...editing, order: Number(v) })} />
+          {/docs\.google\.com\/spreadsheets\//.test(editing.open_link ?? "") && (
+            <Field
+              label="Sheet filters (comma-separated header names)"
+              value={(editing.sheet_filters ?? []).join(", ")}
+              onChange={(v) =>
+                setEditing({
+                  ...editing,
+                  sheet_filters: v
+                    .split(",")
+                    .map((s) => s.trim())
+                    .filter(Boolean),
+                })
+              }
+            />
+          )}
         </Modal>
       )}
     </div>
