@@ -43,23 +43,24 @@ function parseCSV(text: string): string[][] {
   return rows.filter((r) => r.some((c) => c.trim().length > 0));
 }
 
-function splitKeyPoints(raw: string): string[] {
+function splitBullets(raw: string): string[] {
   return raw
     .split(/\||\n/)
     .map((s) => s.replace(/^\s*\d+\.\s*/, "").trim())
     .filter((s) => s.length > 0);
 }
 
-function findCol(headers: string[], candidates: string[]): number {
-  const norm = headers.map((h) => h.toLowerCase().replace(/[\s_-]/g, ""));
-  for (const c of candidates) {
-    const idx = norm.indexOf(c.toLowerCase().replace(/[\s_-]/g, ""));
-    if (idx !== -1) return idx;
-  }
-  return -1;
+function normalize(s: string): string {
+  return s.toLowerCase().replace(/[\s_-]/g, "");
 }
 
-export function SheetTable({ openLink }: { openLink: string }) {
+export function SheetTable({
+  openLink,
+  filterHeaders = [],
+}: {
+  openLink: string;
+  filterHeaders?: string[];
+}) {
   const { csvUrl, sheetUrl } = useMemo(() => {
     const m = openLink.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
     const id = m?.[1];
@@ -73,14 +74,12 @@ export function SheetTable({ openLink }: { openLink: string }) {
     };
   }, [openLink]);
 
-  const [rows, setRows] = useState<
-    { grade: string; module: string; points: string[] }[] | null
-  >(null);
+  const [headers, setHeaders] = useState<string[]>([]);
+  const [rows, setRows] = useState<string[][] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
-  const [gradeFilter, setGradeFilter] = useState("all");
-  const [moduleFilter, setModuleFilter] = useState("all");
+  const [filters, setFilters] = useState<Record<string, string>>({});
 
   useEffect(() => {
     let cancelled = false;
@@ -95,18 +94,15 @@ export function SheetTable({ openLink }: { openLink: string }) {
         if (cancelled) return;
         const parsed = parseCSV(text);
         if (parsed.length === 0) {
+          setHeaders([]);
           setRows([]);
           return;
         }
-        const headers = parsed[0].map((h) => h.trim());
-        const gi = findCol(headers, ["grade"]);
-        const mi = findCol(headers, ["moduleCode", "module", "moduleNumber"]);
-        const ki = findCol(headers, ["keyPoints", "keypoints", "points"]);
-        const data = parsed.slice(1).map((r) => ({
-          grade: (gi >= 0 ? r[gi] : "").trim(),
-          module: (mi >= 0 ? r[mi] : "").trim(),
-          points: splitKeyPoints(ki >= 0 ? r[ki] ?? "" : ""),
-        }));
+        const hdrs = parsed[0].map((h) => h.trim());
+        const data = parsed.slice(1).map((r) =>
+          hdrs.map((_, i) => (r[i] ?? "").trim()),
+        );
+        setHeaders(hdrs);
         setRows(data);
       })
       .catch((e) => {
@@ -120,29 +116,45 @@ export function SheetTable({ openLink }: { openLink: string }) {
     };
   }, [csvUrl]);
 
-  const grades = useMemo(
-    () => Array.from(new Set((rows ?? []).map((r) => r.grade).filter(Boolean))).sort(),
-    [rows],
-  );
-  const modules = useMemo(
-    () => Array.from(new Set((rows ?? []).map((r) => r.module).filter(Boolean))).sort(),
-    [rows],
-  );
+  // Resolve configured filter headers to actual column indices (fuzzy match).
+  const filterCols = useMemo(() => {
+    const normHdrs = headers.map(normalize);
+    return filterHeaders
+      .map((f) => {
+        const idx = normHdrs.indexOf(normalize(f));
+        return idx >= 0 ? { label: headers[idx], index: idx } : null;
+      })
+      .filter((v): v is { label: string; index: number } => v !== null);
+  }, [headers, filterHeaders]);
+
+  const filterOptions = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    for (const fc of filterCols) {
+      const set = new Set<string>();
+      (rows ?? []).forEach((r) => {
+        const v = r[fc.index];
+        if (v) set.add(v);
+      });
+      map[fc.label] = Array.from(set).sort();
+    }
+    return map;
+  }, [rows, filterCols]);
 
   const filtered = useMemo(() => {
     if (!rows) return [];
     const q = query.trim().toLowerCase();
     return rows.filter((r) => {
-      if (gradeFilter !== "all" && r.grade !== gradeFilter) return false;
-      if (moduleFilter !== "all" && r.module !== moduleFilter) return false;
+      for (const fc of filterCols) {
+        const sel = filters[fc.label];
+        if (sel && sel !== "all" && r[fc.index] !== sel) return false;
+      }
       if (!q) return true;
-      return (
-        r.grade.toLowerCase().includes(q) ||
-        r.module.toLowerCase().includes(q) ||
-        r.points.some((p) => p.toLowerCase().includes(q))
-      );
+      return r.some((c) => c.toLowerCase().includes(q));
     });
-  }, [rows, query, gradeFilter, moduleFilter]);
+  }, [rows, query, filterCols, filters]);
+
+  const isBulletCol = (h: string) =>
+    /key\s*points?|points|bullets|notes/i.test(h);
 
   return (
     <div>
@@ -152,33 +164,26 @@ export function SheetTable({ openLink }: { openLink: string }) {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search grade, module, or key points…"
+            placeholder="Search anything…"
             className="h-10 w-72 max-w-full rounded-md border border-border bg-background px-3 text-sm outline-none focus:border-primary"
           />
-          <select
-            value={gradeFilter}
-            onChange={(e) => setGradeFilter(e.target.value)}
-            className="h-10 rounded-md border border-border bg-background px-3 text-sm outline-none focus:border-primary"
-          >
-            <option value="all">All grades</option>
-            {grades.map((g) => (
-              <option key={g} value={g}>
-                {g}
-              </option>
-            ))}
-          </select>
-          <select
-            value={moduleFilter}
-            onChange={(e) => setModuleFilter(e.target.value)}
-            className="h-10 rounded-md border border-border bg-background px-3 text-sm outline-none focus:border-primary"
-          >
-            <option value="all">All modules</option>
-            {modules.map((m) => (
-              <option key={m} value={m}>
-                {m}
-              </option>
-            ))}
-          </select>
+          {filterCols.map((fc) => (
+            <select
+              key={fc.label}
+              value={filters[fc.label] ?? "all"}
+              onChange={(e) =>
+                setFilters((prev) => ({ ...prev, [fc.label]: e.target.value }))
+              }
+              className="h-10 rounded-md border border-border bg-background px-3 text-sm outline-none focus:border-primary"
+            >
+              <option value="all">All {fc.label.toLowerCase()}</option>
+              {(filterOptions[fc.label] ?? []).map((v) => (
+                <option key={v} value={v}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          ))}
         </div>
         <a
           href={sheetUrl}
@@ -222,15 +227,14 @@ export function SheetTable({ openLink }: { openLink: string }) {
             <table className="w-full border-collapse text-sm">
               <thead className="sticky top-0 z-10 bg-[#FAFAFA]">
                 <tr>
-                  <th className="border-b border-[#E5E7EB] px-5 py-4 text-left font-semibold text-foreground w-24">
-                    Grade
-                  </th>
-                  <th className="border-b border-[#E5E7EB] px-5 py-4 text-left font-semibold text-foreground w-28">
-                    Module
-                  </th>
-                  <th className="border-b border-[#E5E7EB] px-5 py-4 text-left font-semibold text-foreground">
-                    Key Points
-                  </th>
+                  {headers.map((h) => (
+                    <th
+                      key={h}
+                      className="border-b border-[#E5E7EB] px-5 py-4 text-left font-semibold text-foreground"
+                    >
+                      {h}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
@@ -241,33 +245,37 @@ export function SheetTable({ openLink }: { openLink: string }) {
                       i % 2 === 1 ? "bg-[#FAFAFA]" : "bg-white"
                     }`}
                   >
-                    <td className="border-b border-[#E5E7EB] px-5 py-4 align-top">
-                      {r.grade && (
-                        <span className="inline-flex items-center rounded-md bg-blue-100 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
-                          {r.grade}
-                        </span>
-                      )}
-                    </td>
-                    <td className="border-b border-[#E5E7EB] px-5 py-4 align-top">
-                      {r.module && (
-                        <span className="inline-flex items-center rounded-md border border-border bg-white px-2.5 py-0.5 text-xs font-medium text-foreground">
-                          {r.module}
-                        </span>
-                      )}
-                    </td>
-                    <td className="border-b border-[#E5E7EB] px-5 py-4 align-top">
-                      {r.points.length > 0 ? (
-                        <ul className="list-disc space-y-1 pl-5 text-foreground/90">
-                          {r.points.map((p, j) => (
-                            <li key={j} className="leading-relaxed">
-                              {p}
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </td>
+                    {headers.map((h, ci) => {
+                      const cell = r[ci] ?? "";
+                      const bullets = isBulletCol(h) ? splitBullets(cell) : null;
+                      const isFilterCol = filterCols.some((fc) => fc.index === ci);
+                      return (
+                        <td
+                          key={ci}
+                          className="border-b border-[#E5E7EB] px-5 py-4 align-top"
+                        >
+                          {bullets && bullets.length > 1 ? (
+                            <ul className="list-disc space-y-1 pl-5 text-foreground/90">
+                              {bullets.map((p, j) => (
+                                <li key={j} className="leading-relaxed">
+                                  {p}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : cell ? (
+                            isFilterCol ? (
+                              <span className="inline-flex items-center rounded-md bg-blue-100 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
+                                {cell}
+                              </span>
+                            ) : (
+                              <span className="text-foreground/90">{cell}</span>
+                            )
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </td>
+                      );
+                    })}
                   </tr>
                 ))}
               </tbody>
