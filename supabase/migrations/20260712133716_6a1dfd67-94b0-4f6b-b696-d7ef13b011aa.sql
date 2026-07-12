@@ -1,0 +1,1 @@
+ALTER TABLE public.cards ADD COLUMN IF NOT EXISTS sheet_filters text[] NOT NULL DEFAULT '{}'::text[];
