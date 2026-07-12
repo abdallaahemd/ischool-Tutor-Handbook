@@ -1,17 +1,15 @@
 import { ArrowLeft, ExternalLink } from "lucide-react";
-import { useState } from "react";
 import type { Card } from "./data";
 import { PdfViewer } from "./PdfViewer";
 import { SheetTable } from "./SheetTable";
 
-function toDirectUrl(driveUrl: string): string {
+function toPreviewUrl(driveUrl: string): string {
   const match = driveUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
   if (!match) return driveUrl;
-  return `https://drive.google.com/uc?export=download&id=${match[1]}`;
+  return `https://drive.google.com/file/d/${match[1]}/preview`;
 }
 
 export function InlineViewer({ card, onBack }: { card: Card; onBack: () => void }) {
-  const [videoLoading, setVideoLoading] = useState(true);
   const isPdf = card.icon_style === "pdf";
   const isVideo = card.icon_style === "video";
   const isSheet = /docs\.google\.com\/spreadsheets\//.test(card.open_link);
@@ -46,25 +44,30 @@ export function InlineViewer({ card, onBack }: { card: Card; onBack: () => void 
         <SheetTable openLink={card.open_link} filterHeaders={card.sheet_filters ?? []} />
       )}
       {isVideo && (
-        <div style={{ position: "relative", width: "100%", height: "calc(100vh - 120px)" }}>
-          {videoLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black rounded-xl">
-              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-white" />
-            </div>
-          )}
-          <video
-            src={toDirectUrl(card.open_link)}
-            controls
-            controlsList="nodownload"
-            disablePictureInPicture
-            onCanPlay={() => setVideoLoading(false)}
-            onContextMenu={(e) => e.preventDefault()}
+        <div style={{ position: "relative", width: "100%", height: "calc(100vh - 120px)", overflow: "hidden", borderRadius: 12 }}>
+          <iframe
+            src={toPreviewUrl(card.open_link)}
+            title={card.header}
+            allow="autoplay; fullscreen"
+            allowFullScreen
             style={{
               width: "100%",
               height: "100%",
+              border: "none",
               borderRadius: 12,
               backgroundColor: "#000",
-              outline: "none",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              right: 0,
+              width: 80,
+              height: 60,
+              backgroundColor: "hsl(var(--background))",
+              zIndex: 9999,
+              pointerEvents: "all",
             }}
           />
         </div>
