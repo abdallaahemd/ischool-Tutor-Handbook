@@ -20,6 +20,7 @@ export interface Card {
   view_link: string | null;
   open_link: string;
   order: number;
+  sheet_filters?: string[] | null;
 }
 
 export function useCategories() {
