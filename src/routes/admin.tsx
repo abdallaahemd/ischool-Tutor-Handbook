@@ -288,6 +288,7 @@ function CardsTab() {
           view_link: editing.view_link || null,
           open_link: editing.open_link ?? "",
           order: editing.order ?? 0,
+          sheet_filters: editing.sheet_filters ?? [],
         } as never,
       });
     } catch (err) {
