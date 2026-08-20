@@ -118,6 +118,213 @@ export type Database = {
         }
         Relationships: []
       }
+      faq_audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          new_data: Json | null
+          old_data: Json | null
+          record_id: string | null
+          table_name: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id?: string | null
+          table_name?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id?: string | null
+          table_name?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      faq_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      faq_knowledge_sources: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          source_reference: string | null
+          source_type: string
+          topic_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          source_reference?: string | null
+          source_type: string
+          topic_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          source_reference?: string | null
+          source_type?: string
+          topic_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faq_knowledge_sources_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "faq_knowledge_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      faq_knowledge_topics: {
+        Row: {
+          answer: string
+          category_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          last_verified_at: string | null
+          main_question: string
+          priority: string
+          status: string
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          answer: string
+          category_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          last_verified_at?: string | null
+          main_question: string
+          priority?: string
+          status?: string
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          answer?: string
+          category_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          last_verified_at?: string | null
+          main_question?: string
+          priority?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faq_knowledge_topics_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "faq_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      faq_profiles: {
+        Row: {
+          created_at: string
+          full_name: string
+          id: string
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          full_name: string
+          id: string
+          role?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string
+          id?: string
+          role?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      faq_question_variants: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          normalized_variant: string
+          topic_id: string
+          variant: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          normalized_variant: string
+          topic_id: string
+          variant: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          normalized_variant?: string
+          topic_id?: string
+          variant?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faq_question_variants_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "faq_knowledge_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       materials: {
         Row: {
           category_id: string | null
@@ -285,6 +492,37 @@ export type Database = {
           _tutor_id: string
         }
         Returns: Json
+      }
+      faq_find_similar: {
+        Args: { _limit?: number; _question: string }
+        Returns: {
+          main_question: string
+          matched_variant: string
+          score: number
+          status: string
+          title: string
+          topic_id: string
+        }[]
+      }
+      faq_has_role: {
+        Args: { _roles: string[]; _user_id: string }
+        Returns: boolean
+      }
+      faq_normalize: { Args: { _text: string }; Returns: string }
+      faq_search: {
+        Args: { _limit?: number; _query: string }
+        Returns: {
+          answer: string
+          category_id: string
+          category_name: string
+          main_question: string
+          matched_variant: string
+          priority: string
+          score: number
+          status: string
+          title: string
+          topic_id: string
+        }[]
       }
       has_role: {
         Args: {

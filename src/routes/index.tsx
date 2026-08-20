@@ -131,7 +131,8 @@ function Index() {
             {categories.map((cat) => (
               <Link
                 key={cat.id}
-                to={`/c/${cat.slug}`}
+                to="/c/$slug"
+                params={{ slug: cat.slug }}
                 className="group relative flex flex-col rounded-2xl border border-border bg-card p-5 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_8px_30px_-12px_rgba(37,99,235,0.25)]"
               >
                 <div className="flex items-start justify-between">
