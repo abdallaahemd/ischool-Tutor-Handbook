@@ -493,6 +493,37 @@ export type Database = {
         }
         Returns: Json
       }
+      faq_find_similar: {
+        Args: { _limit?: number; _question: string }
+        Returns: {
+          main_question: string
+          matched_variant: string
+          score: number
+          status: string
+          title: string
+          topic_id: string
+        }[]
+      }
+      faq_has_role: {
+        Args: { _roles: string[]; _user_id: string }
+        Returns: boolean
+      }
+      faq_normalize: { Args: { _text: string }; Returns: string }
+      faq_search: {
+        Args: { _limit?: number; _query: string }
+        Returns: {
+          answer: string
+          category_id: string
+          category_name: string
+          main_question: string
+          matched_variant: string
+          priority: string
+          score: number
+          status: string
+          title: string
+          topic_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
