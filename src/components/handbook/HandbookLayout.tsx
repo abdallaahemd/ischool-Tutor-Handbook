@@ -164,7 +164,8 @@ export function HandbookLayout({
                   return (
                     <Link
                       key={c.id}
-                      to={cat ? `/c/${cat.slug}` : "/"}
+                      to={cat ? "/c/$slug" : "/"}
+                      params={cat ? { slug: cat.slug } : undefined}
                       onClick={() => {
                         setQuery("");
                         onSearchSelect?.(c.id);
