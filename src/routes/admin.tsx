@@ -49,7 +49,7 @@ function requireAdmin(navigate: ReturnType<typeof useNavigate>): boolean {
   return true;
 }
 
-type Tab = "dashboard" | "categories" | "cards" | "tutors";
+type Tab = "dashboard" | "categories" | "cards" | "tutors" | "faq";
 
 function AdminDashboard() {
   const navigate = useNavigate();
