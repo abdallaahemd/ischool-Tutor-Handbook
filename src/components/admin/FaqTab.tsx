@@ -308,6 +308,23 @@ function TopicsPanel() {
           onChange={setEditing}
           onClose={() => setEditing(null)}
           onSave={submit}
+          onOpenExisting={(topicId) => {
+            const t = topics.find((x) => x.id === topicId);
+            if (!t) return toast.error("That topic is no longer available");
+            setEditing({
+              id: t.id,
+              category_id: t.category_id,
+              title: t.title,
+              main_question: t.main_question,
+              answer: t.answer,
+              status: t.status,
+              priority: t.priority,
+            });
+          }}
+          onAddedVariant={() => {
+            setEditing(null);
+            topicsQuery.refetch();
+          }}
         />
       )}
 
