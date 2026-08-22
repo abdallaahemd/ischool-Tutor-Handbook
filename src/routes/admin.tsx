@@ -11,6 +11,7 @@ import {
   Pencil,
   Trash2,
   X,
+  Sparkles,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
