@@ -100,6 +100,7 @@ function AdminDashboard() {
         {tab === "categories" && <CategoriesTab />}
         {tab === "cards" && <CardsTab />}
         {tab === "tutors" && <TutorsTab />}
+        {tab === "faq" && <FaqTab />}
       </main>
     </div>
   );
