@@ -493,6 +493,10 @@ export type Database = {
         }
         Returns: Json
       }
+      faq_check_duplicate: {
+        Args: { _limit?: number; _question: string }
+        Returns: Json
+      }
       faq_find_similar: {
         Args: { _limit?: number; _question: string }
         Returns: {
