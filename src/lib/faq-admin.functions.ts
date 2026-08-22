@@ -160,6 +160,35 @@ export const findSimilarFaq = createServerFn({ method: "POST" })
     return { rows: ((rows ?? []) as unknown as FaqSimilarHit[]).filter((r) => r.score > 0.3) };
   });
 
+export interface FaqDuplicateHit {
+  topic_id: string;
+  title: string;
+  main_question: string;
+  status: string;
+  category_id: string;
+  matched_variant: string | null;
+  matched_on?: string;
+  score?: number;
+}
+
+export interface FaqDuplicateCheck {
+  exact: FaqDuplicateHit | null;
+  similar: FaqDuplicateHit[];
+}
+
+export const checkFaqDuplicate = createServerFn({ method: "POST" })
+  .inputValidator((d: { admin_id: string; question: string }) => d)
+  .handler(async ({ data }) => {
+    const db = await verifyFaqAdmin(data.admin_id);
+    const { data: res, error } = await db.rpc("faq_check_duplicate", {
+      _question: data.question,
+      _limit: 5,
+    });
+    if (error) throw new Error(error.message);
+    const out = (res ?? { exact: null, similar: [] }) as unknown as FaqDuplicateCheck;
+    return { exact: out.exact ?? null, similar: out.similar ?? [] };
+  });
+
 /* ---------------- Audit ---------------- */
 export const listFaqAudit = createServerFn({ method: "POST" })
   .inputValidator((d: { admin_id: string }) => d)
