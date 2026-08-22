@@ -116,6 +116,7 @@ export function HandbookLayout({
             </div>
             <nav className="flex flex-col gap-1 p-2">
               <NavLink to="/" icon="Home" label="Home" collapsed={false} active={path === "/"} onClick={() => setMobileOpen(false)} />
+              <NavLink to="/ask" icon="Sparkles" label="Ask About Anything" collapsed={false} active={path === "/ask"} onClick={() => setMobileOpen(false)} />
               <div className="px-3 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Categories
               </div>
