@@ -341,15 +341,26 @@ function TopicModal({
   onChange,
   onClose,
   onSave,
+  onOpenExisting,
+  onAddedVariant,
 }: {
   draft: TopicDraft;
   categories: { id: string; name: string }[];
   onChange: (d: TopicDraft) => void;
   onClose: () => void;
   onSave: () => void;
+  onOpenExisting: (topicId: string) => void;
+  onAddedVariant: () => void;
 }) {
-  const similar = useServerFn(findSimilarFaq);
-  const [hits, setHits] = useState<FaqSimilarHit[]>([]);
+  const check = useServerFn(checkFaqDuplicate);
+  const addVariant = useServerFn(addFaqVariant);
+  const [hits, setHits] = useState<FaqDuplicateHit[]>([]);
+  const [gate, setGate] = useState<
+    | null
+    | { kind: "exact"; hit: FaqDuplicateHit }
+    | { kind: "similar"; hits: FaqDuplicateHit[] }
+  >(null);
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     const q = draft.main_question.trim();
@@ -360,14 +371,156 @@ function TopicModal({
     }
     const timer = setTimeout(async () => {
       try {
-        const res = await similar({ data: { admin_id: id, question: q } });
-        setHits(res.rows);
+        const res = await check({ data: { admin_id: id, question: q } });
+        setHits(res.exact ? [res.exact, ...res.similar] : res.similar);
       } catch {
         setHits([]);
       }
     }, 500);
     return () => clearTimeout(timer);
-  }, [draft.main_question, draft.id, similar]);
+  }, [draft.main_question, draft.id, check]);
+
+  const guardedSave = async () => {
+    const id = adminId();
+    const q = draft.main_question.trim();
+    if (draft.id || !id || !q) return onSave();
+    setBusy(true);
+    try {
+      const res = await check({ data: { admin_id: id, question: q } });
+      if (res.exact) {
+        setGate({ kind: "exact", hit: res.exact });
+        return;
+      }
+      if (res.similar.length > 0) {
+        setGate({ kind: "similar", hits: res.similar });
+        return;
+      }
+      onSave();
+    } catch {
+      onSave();
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const addAsVariant = async (topicId: string) => {
+    const id = adminId();
+    if (!id) return toast.error("Session expired. Sign in again.");
+    setBusy(true);
+    try {
+      await addVariant({
+        data: { admin_id: id, topic_id: topicId, variant: draft.main_question.trim() },
+      });
+      toast.success("Added as a question variant of the existing topic");
+      setGate(null);
+      onAddedVariant();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not add the variant");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (gate?.kind === "exact") {
+    return (
+      <Modal title="This question already exists." onClose={() => setGate(null)}>
+        <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm">
+          <div className="flex items-center gap-2 font-medium text-foreground">
+            <AlertTriangle className="h-4 w-4 text-destructive" /> Exact match found
+            {gate.hit.matched_on === "variant" && " (existing question variant)"}
+          </div>
+          <p className="mt-2 font-medium text-foreground">{gate.hit.main_question}</p>
+          {gate.hit.matched_variant && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              Matched wording: “{gate.hit.matched_variant}”
+            </p>
+          )}
+          <p className="mt-1 text-xs text-muted-foreground">Status: {gate.hit.status}</p>
+        </div>
+        <div className="flex flex-wrap justify-end gap-2">
+          <button
+            onClick={() => setGate(null)}
+            className="rounded-md border border-border px-3 py-2 text-sm hover:bg-muted"
+          >
+            Cancel
+          </button>
+          <button
+            disabled={busy}
+            onClick={() => addAsVariant(gate.hit.topic_id)}
+            className="rounded-md border border-border px-3 py-2 text-sm hover:bg-muted disabled:opacity-60"
+          >
+            Add as variant
+          </button>
+          <button
+            onClick={() => {
+              setGate(null);
+              onOpenExisting(gate.hit.topic_id);
+            }}
+            className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+          >
+            Open existing topic
+          </button>
+        </div>
+      </Modal>
+    );
+  }
+
+  if (gate?.kind === "similar") {
+    return (
+      <Modal title="Possible similar questions found" onClose={() => setGate(null)}>
+        <p className="text-sm text-muted-foreground">
+          Choose whether your question belongs to one of these topics, or is a different topic.
+        </p>
+        <div className="space-y-2">
+          {gate.hits.map((h) => (
+            <div key={h.topic_id} className="rounded-lg border border-border bg-card p-3">
+              <div className="text-sm font-medium text-foreground">{h.main_question}</div>
+              <div className="mt-0.5 text-xs text-muted-foreground">
+                {h.title}
+                {h.matched_variant ? ` · variant: “${h.matched_variant}”` : ""}
+                {typeof h.score === "number" ? ` · ${Math.round(h.score * 100)}% similar` : ""}
+              </div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <button
+                  disabled={busy}
+                  onClick={() => addAsVariant(h.topic_id)}
+                  className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90 disabled:opacity-60"
+                >
+                  This is the same topic
+                </button>
+                <button
+                  onClick={() => {
+                    setGate(null);
+                    onOpenExisting(h.topic_id);
+                  }}
+                  className="rounded-md border border-border px-3 py-1.5 text-xs hover:bg-muted"
+                >
+                  Open existing topic
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="flex flex-wrap justify-end gap-2">
+          <button
+            onClick={() => setGate(null)}
+            className="rounded-md border border-border px-3 py-2 text-sm hover:bg-muted"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => {
+              setGate(null);
+              onSave();
+            }}
+            className="rounded-md border border-primary px-3 py-2 text-sm font-medium text-primary hover:bg-primary/10"
+          >
+            This is a different topic
+          </button>
+        </div>
+      </Modal>
+    );
+  }
 
   return (
     <Modal title={draft.id ? "Edit topic" : "New topic"} onClose={onClose}>
