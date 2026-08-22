@@ -87,6 +87,7 @@ function AdminDashboard() {
           <AdminNav active={tab === "categories"} onClick={() => setTab("categories")} icon={<Folder className="h-4 w-4" />} label="Categories" />
           <AdminNav active={tab === "cards"} onClick={() => setTab("cards")} icon={<FileText className="h-4 w-4" />} label="Cards" />
           <AdminNav active={tab === "tutors"} onClick={() => setTab("tutors")} icon={<Upload className="h-4 w-4" />} label="Tutors" />
+          <AdminNav active={tab === "faq"} onClick={() => setTab("faq")} icon={<Sparkles className="h-4 w-4" />} label="Ask About Anything" />
           <button onClick={logout} className="mt-6 inline-flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted">
             <LogOut className="h-4 w-4" /> Logout
           </button>
