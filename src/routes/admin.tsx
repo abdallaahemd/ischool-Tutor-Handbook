@@ -20,6 +20,7 @@ import {
   readAdminSession,
 } from "@/components/admin/useAdminSession";
 import { LogoMark } from "@/components/handbook/Logo";
+import { FaqTab } from "@/components/admin/FaqTab";
 import {
   useCategories,
   useAllCards,
