@@ -65,6 +65,8 @@ export interface FaqTopicInput {
   answer: string;
   status: string;
   priority: string;
+  /** yyyy-mm-dd from the editor; blank means "set automatically". */
+  last_verified_at?: string;
 }
 
 export const upsertFaqTopic = createServerFn({ method: "POST" })
@@ -74,6 +76,7 @@ export const upsertFaqTopic = createServerFn({ method: "POST" })
     if (!data.category_id) throw new Error("A FAQ category is required");
     if (!data.main_question.trim()) throw new Error("The canonical question is required");
     if (!data.answer.trim()) throw new Error("The official answer is required");
+    const manual = (data.last_verified_at ?? "").trim();
     const payload = {
       category_id: data.category_id,
       title: data.title.trim() || data.main_question.trim().slice(0, 120),
@@ -81,8 +84,13 @@ export const upsertFaqTopic = createServerFn({ method: "POST" })
       answer: data.answer.trim(),
       status: data.status,
       priority: data.priority,
-      last_verified_at: data.status === "verified" ? new Date().toISOString() : null,
+      last_verified_at: manual
+        ? new Date(`${manual}T00:00:00Z`).toISOString()
+        : data.status === "verified"
+          ? new Date().toISOString()
+          : null,
     };
+
     const { data: row, error } = data.id
       ? await db.from("faq_knowledge_topics").update(payload).eq("id", data.id).select().maybeSingle()
       : await db.from("faq_knowledge_topics").insert(payload).select().maybeSingle();
