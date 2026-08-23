@@ -13,8 +13,8 @@ import {
   listFaqVariants,
   addFaqVariant,
   deleteFaqVariant,
-  findSimilarFaq,
-  type FaqSimilarHit,
+  checkFaqDuplicate,
+  type FaqDuplicateHit,
 } from "@/lib/faq-admin.functions";
 import { useFaqCategories, type FaqTopic } from "@/lib/faq";
 
