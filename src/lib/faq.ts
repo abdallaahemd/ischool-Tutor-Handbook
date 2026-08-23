@@ -43,7 +43,10 @@ export interface FaqSearchHit {
   category_id: string | null;
   category_name: string | null;
   matched_variant: string | null;
+  /** How the row was matched: exact | canonical | variant | keyword. */
+  match_type?: "exact" | "canonical" | "variant" | "keyword";
   score: number;
+
 }
 
 export function useFaqCategories() {
