@@ -38,10 +38,22 @@ export const deleteFaqCategory = createServerFn({ method: "POST" })
   .inputValidator((d: { admin_id: string; id: string }) => d)
   .handler(async ({ data }) => {
     const db = await verifyFaqAdmin(data.admin_id);
+    // Safe delete: refuse while FAQ topics still live in this category.
+    const { count, error: countError } = await db
+      .from("faq_knowledge_topics")
+      .select("id", { count: "exact", head: true })
+      .eq("category_id", data.id);
+    if (countError) throw new Error(countError.message);
+    if ((count ?? 0) > 0) {
+      throw new Error(
+        `This category still holds ${count} topic${count === 1 ? "" : "s"}. Move or delete them first.`,
+      );
+    }
     const { error } = await db.from("faq_categories").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
 
 /* ---------------- Topics ---------------- */
 export interface FaqTopicInput {
