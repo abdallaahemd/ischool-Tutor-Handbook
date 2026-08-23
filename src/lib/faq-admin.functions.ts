@@ -202,3 +202,102 @@ export const listFaqAudit = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { rows: rows ?? [] };
   });
+
+/* ---------------- Overview stats ---------------- */
+export interface FaqStats {
+  categories: number;
+  topics: number;
+  verified: number;
+  draft: number;
+  needs_review: number;
+  archived: number;
+  variants: number;
+  sources: number;
+  recent: {
+    id: string;
+    title: string;
+    status: string;
+    updated_at: string;
+    category_name: string | null;
+  }[];
+}
+
+export const faqStats = createServerFn({ method: "POST" })
+  .inputValidator((d: { admin_id: string }) => d)
+  .handler(async ({ data }) => {
+    const db = await verifyFaqAdmin(data.admin_id);
+    const { data: res, error } = await db.rpc("faq_admin_stats");
+    if (error) throw new Error(error.message);
+    return res as unknown as FaqStats;
+  });
+
+/** Topic count per FAQ category — used for the categories table and safe deletes. */
+export const faqCategoryCounts = createServerFn({ method: "POST" })
+  .inputValidator((d: { admin_id: string }) => d)
+  .handler(async ({ data }) => {
+    const db = await verifyFaqAdmin(data.admin_id);
+    const { data: rows, error } = await db
+      .from("faq_knowledge_topics")
+      .select("category_id");
+    if (error) throw new Error(error.message);
+    const counts: Record<string, number> = {};
+    for (const r of (rows ?? []) as { category_id: string }[]) {
+      counts[r.category_id] = (counts[r.category_id] ?? 0) + 1;
+    }
+    return { counts };
+  });
+
+/* ---------------- Knowledge sources ---------------- */
+export interface FaqSource {
+  id: string;
+  topic_id: string;
+  source_type: string;
+  source_reference: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
+export const listFaqSources = createServerFn({ method: "POST" })
+  .inputValidator((d: { admin_id: string; topic_id: string }) => d)
+  .handler(async ({ data }) => {
+    const db = await verifyFaqAdmin(data.admin_id);
+    const { data: rows, error } = await db
+      .from("faq_knowledge_sources")
+      .select("*")
+      .eq("topic_id", data.topic_id)
+      .order("created_at", { ascending: true });
+    if (error) throw new Error(error.message);
+    return { rows: (rows ?? []) as unknown as FaqSource[] };
+  });
+
+export const addFaqSource = createServerFn({ method: "POST" })
+  .inputValidator(
+    (d: {
+      admin_id: string;
+      topic_id: string;
+      source_type: string;
+      source_reference: string;
+      notes: string;
+    }) => d,
+  )
+  .handler(async ({ data }) => {
+    const db = await verifyFaqAdmin(data.admin_id);
+    if (!data.source_type.trim()) throw new Error("A source type is required");
+    const { error } = await db.from("faq_knowledge_sources").insert({
+      topic_id: data.topic_id,
+      source_type: data.source_type.trim(),
+      source_reference: data.source_reference.trim() || null,
+      notes: data.notes.trim() || null,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const deleteFaqSource = createServerFn({ method: "POST" })
+  .inputValidator((d: { admin_id: string; id: string }) => d)
+  .handler(async ({ data }) => {
+    const db = await verifyFaqAdmin(data.admin_id);
+    const { error } = await db.from("faq_knowledge_sources").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
