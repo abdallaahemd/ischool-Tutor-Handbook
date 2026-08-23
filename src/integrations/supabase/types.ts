@@ -493,6 +493,7 @@ export type Database = {
         }
         Returns: Json
       }
+      faq_admin_stats: { Args: never; Returns: Json }
       faq_check_duplicate: {
         Args: { _limit?: number; _question: string }
         Returns: Json
@@ -520,6 +521,7 @@ export type Database = {
           category_id: string
           category_name: string
           main_question: string
+          match_type: string
           matched_variant: string
           priority: string
           score: number
