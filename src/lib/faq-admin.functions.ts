@@ -38,10 +38,22 @@ export const deleteFaqCategory = createServerFn({ method: "POST" })
   .inputValidator((d: { admin_id: string; id: string }) => d)
   .handler(async ({ data }) => {
     const db = await verifyFaqAdmin(data.admin_id);
+    // Safe delete: refuse while FAQ topics still live in this category.
+    const { count, error: countError } = await db
+      .from("faq_knowledge_topics")
+      .select("id", { count: "exact", head: true })
+      .eq("category_id", data.id);
+    if (countError) throw new Error(countError.message);
+    if ((count ?? 0) > 0) {
+      throw new Error(
+        `This category still holds ${count} topic${count === 1 ? "" : "s"}. Move or delete them first.`,
+      );
+    }
     const { error } = await db.from("faq_categories").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
 
 /* ---------------- Topics ---------------- */
 export interface FaqTopicInput {
@@ -53,6 +65,8 @@ export interface FaqTopicInput {
   answer: string;
   status: string;
   priority: string;
+  /** yyyy-mm-dd from the editor; blank means "set automatically". */
+  last_verified_at?: string;
 }
 
 export const upsertFaqTopic = createServerFn({ method: "POST" })
@@ -62,6 +76,7 @@ export const upsertFaqTopic = createServerFn({ method: "POST" })
     if (!data.category_id) throw new Error("A FAQ category is required");
     if (!data.main_question.trim()) throw new Error("The canonical question is required");
     if (!data.answer.trim()) throw new Error("The official answer is required");
+    const manual = (data.last_verified_at ?? "").trim();
     const payload = {
       category_id: data.category_id,
       title: data.title.trim() || data.main_question.trim().slice(0, 120),
@@ -69,8 +84,13 @@ export const upsertFaqTopic = createServerFn({ method: "POST" })
       answer: data.answer.trim(),
       status: data.status,
       priority: data.priority,
-      last_verified_at: data.status === "verified" ? new Date().toISOString() : null,
+      last_verified_at: manual
+        ? new Date(`${manual}T00:00:00Z`).toISOString()
+        : data.status === "verified"
+          ? new Date().toISOString()
+          : null,
     };
+
     const { data: row, error } = data.id
       ? await db.from("faq_knowledge_topics").update(payload).eq("id", data.id).select().maybeSingle()
       : await db.from("faq_knowledge_topics").insert(payload).select().maybeSingle();
@@ -201,4 +221,103 @@ export const listFaqAudit = createServerFn({ method: "POST" })
       .limit(50);
     if (error) throw new Error(error.message);
     return { rows: rows ?? [] };
+  });
+
+/* ---------------- Overview stats ---------------- */
+export interface FaqStats {
+  categories: number;
+  topics: number;
+  verified: number;
+  draft: number;
+  needs_review: number;
+  archived: number;
+  variants: number;
+  sources: number;
+  recent: {
+    id: string;
+    title: string;
+    status: string;
+    updated_at: string;
+    category_name: string | null;
+  }[];
+}
+
+export const faqStats = createServerFn({ method: "POST" })
+  .inputValidator((d: { admin_id: string }) => d)
+  .handler(async ({ data }) => {
+    const db = await verifyFaqAdmin(data.admin_id);
+    const { data: res, error } = await db.rpc("faq_admin_stats");
+    if (error) throw new Error(error.message);
+    return res as unknown as FaqStats;
+  });
+
+/** Topic count per FAQ category — used for the categories table and safe deletes. */
+export const faqCategoryCounts = createServerFn({ method: "POST" })
+  .inputValidator((d: { admin_id: string }) => d)
+  .handler(async ({ data }) => {
+    const db = await verifyFaqAdmin(data.admin_id);
+    const { data: rows, error } = await db
+      .from("faq_knowledge_topics")
+      .select("category_id");
+    if (error) throw new Error(error.message);
+    const counts: Record<string, number> = {};
+    for (const r of (rows ?? []) as { category_id: string }[]) {
+      counts[r.category_id] = (counts[r.category_id] ?? 0) + 1;
+    }
+    return { counts };
+  });
+
+/* ---------------- Knowledge sources ---------------- */
+export interface FaqSource {
+  id: string;
+  topic_id: string;
+  source_type: string;
+  source_reference: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
+export const listFaqSources = createServerFn({ method: "POST" })
+  .inputValidator((d: { admin_id: string; topic_id: string }) => d)
+  .handler(async ({ data }) => {
+    const db = await verifyFaqAdmin(data.admin_id);
+    const { data: rows, error } = await db
+      .from("faq_knowledge_sources")
+      .select("*")
+      .eq("topic_id", data.topic_id)
+      .order("created_at", { ascending: true });
+    if (error) throw new Error(error.message);
+    return { rows: (rows ?? []) as unknown as FaqSource[] };
+  });
+
+export const addFaqSource = createServerFn({ method: "POST" })
+  .inputValidator(
+    (d: {
+      admin_id: string;
+      topic_id: string;
+      source_type: string;
+      source_reference: string;
+      notes: string;
+    }) => d,
+  )
+  .handler(async ({ data }) => {
+    const db = await verifyFaqAdmin(data.admin_id);
+    if (!data.source_type.trim()) throw new Error("A source type is required");
+    const { error } = await db.from("faq_knowledge_sources").insert({
+      topic_id: data.topic_id,
+      source_type: data.source_type.trim(),
+      source_reference: data.source_reference.trim() || null,
+      notes: data.notes.trim() || null,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const deleteFaqSource = createServerFn({ method: "POST" })
+  .inputValidator((d: { admin_id: string; id: string }) => d)
+  .handler(async ({ data }) => {
+    const db = await verifyFaqAdmin(data.admin_id);
+    const { error } = await db.from("faq_knowledge_sources").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });

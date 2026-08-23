@@ -121,8 +121,8 @@ function AskPage() {
                 ) : turn.hits.length === 0 ? (
                   <div className="rounded-2xl border border-border bg-card px-4 py-4 text-sm text-muted-foreground">
                     <MessageCircleQuestion className="mb-2 h-5 w-5 text-accent" />
-                    No verified answer covers this yet. Please ask your team lead — and it can be
-                    added to the knowledge base.
+                    I couldn&apos;t find a verified answer for this question in the knowledge base.
+                    Please contact your Mentor or Team Leader for assistance.
                   </div>
                 ) : (
                   turn.hits.map((hit, idx) => (
@@ -136,6 +136,11 @@ function AskPage() {
                             Best match
                           </span>
                         )}
+                        {hit.match_type && (
+                          <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium capitalize text-muted-foreground">
+                            {hit.match_type} match
+                          </span>
+                        )}
                         {hit.category_name && (
                           <span className="rounded-full bg-secondary px-2 py-0.5 text-[11px] font-medium text-secondary-foreground">
                             {hit.category_name}
@@ -147,20 +152,24 @@ function AskPage() {
                           </span>
                         )}
                       </div>
-                      <h3 className="mt-2 text-base font-semibold text-foreground">
-                        {hit.main_question}
-                      </h3>
-                      <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
+                      <p className="mt-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        Topic
+                      </p>
+                      <h3 className="text-base font-semibold text-foreground">{hit.title}</h3>
+                      <p className="mt-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        Answer
+                      </p>
+                      <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
                         {hit.answer}
                       </p>
-                      {hit.matched_variant && (
-                        <p className="mt-3 text-xs text-muted-foreground/80">
-                          Matched wording: “{hit.matched_variant}”
-                        </p>
-                      )}
+                      <p className="mt-3 text-xs text-muted-foreground/80">
+                        Verified question: “{hit.main_question}”
+                        {hit.matched_variant ? ` · matched wording: “${hit.matched_variant}”` : ""}
+                      </p>
                     </article>
                   ))
                 )}
+
               </div>
             ))}
           </section>
