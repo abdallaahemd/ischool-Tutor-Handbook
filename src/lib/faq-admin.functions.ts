@@ -149,6 +149,47 @@ export const addFaqVariant = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const updateFaqVariant = createServerFn({ method: "POST" })
+  .inputValidator((d: { admin_id: string; id: string; variant: string }) => d)
+  .handler(async ({ data }) => {
+    const db = await verifyFaqAdmin(data.admin_id);
+    const variant = data.variant.trim();
+    if (!variant) throw new Error("Variant text is required");
+    const { error } = await db
+      .from("faq_question_variants")
+      .update({ variant, normalized_variant: variant.toLowerCase() })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/** Every variant with its parent topic — powers the Variants management panel. */
+export const listAllFaqVariants = createServerFn({ method: "POST" })
+  .inputValidator((d: { admin_id: string }) => d)
+  .handler(async ({ data }) => {
+    const db = await verifyFaqAdmin(data.admin_id);
+    const { data: rows, error } = await db
+      .from("faq_question_variants")
+      .select("id, topic_id, variant, created_at, faq_knowledge_topics(title, main_question, status)")
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return {
+      rows: (rows ?? []).map((r) => {
+        const t = (r as unknown as { faq_knowledge_topics: { title: string; main_question: string; status: string } | null })
+          .faq_knowledge_topics;
+        return {
+          id: r.id as string,
+          topic_id: r.topic_id as string,
+          variant: r.variant as string,
+          created_at: r.created_at as string,
+          topic_title: t?.title ?? "—",
+          topic_question: t?.main_question ?? "—",
+          topic_status: t?.status ?? "—",
+        };
+      }),
+    };
+  });
+
 export const deleteFaqVariant = createServerFn({ method: "POST" })
   .inputValidator((d: { admin_id: string; id: string }) => d)
   .handler(async ({ data }) => {
@@ -157,6 +198,7 @@ export const deleteFaqVariant = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
 
 /* ---------------- Duplicate detection ---------------- */
 export interface FaqSimilarHit {
