@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as KnowledgeRouteImport } from './routes/knowledge'
 import { Route as AskRouteImport } from './routes/ask'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
@@ -32,6 +33,11 @@ const McpRoute = McpRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KnowledgeRoute = KnowledgeRouteImport.update({
+  id: '/knowledge',
+  path: '/knowledge',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AskRoute = AskRouteImport.update({
@@ -103,6 +109,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/ask': typeof AskRoute
+  '/knowledge': typeof KnowledgeRoute
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
@@ -119,6 +126,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/ask': typeof AskRoute
+  '/knowledge': typeof KnowledgeRoute
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
@@ -136,6 +144,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/ask': typeof AskRoute
+  '/knowledge': typeof KnowledgeRoute
   '/login': typeof LoginRoute
   '/mcp': typeof McpRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
@@ -154,6 +163,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/ask'
+    | '/knowledge'
     | '/login'
     | '/mcp'
     | '/.mcp/list-tools'
@@ -170,6 +180,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/ask'
+    | '/knowledge'
     | '/login'
     | '/mcp'
     | '/.mcp/list-tools'
@@ -186,6 +197,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/ask'
+    | '/knowledge'
     | '/login'
     | '/mcp'
     | '/.mcp/list-tools'
@@ -203,6 +215,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   AskRoute: typeof AskRoute
+  KnowledgeRoute: typeof KnowledgeRoute
   LoginRoute: typeof LoginRoute
   McpRoute: typeof McpRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
@@ -230,6 +243,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/knowledge': {
+      id: '/knowledge'
+      path: '/knowledge'
+      fullPath: '/knowledge'
+      preLoaderRoute: typeof KnowledgeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ask': {
@@ -323,6 +343,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   AskRoute: AskRoute,
+  KnowledgeRoute: KnowledgeRoute,
   LoginRoute: LoginRoute,
   McpRoute: McpRoute,
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,

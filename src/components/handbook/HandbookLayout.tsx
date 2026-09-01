@@ -78,6 +78,14 @@ export function HandbookLayout({
             collapsed={collapsed}
             active={path === "/ask"}
           />
+          <NavLink
+            to="/knowledge"
+            icon="BookOpen"
+            label="Knowledge Base"
+            collapsed={collapsed}
+            active={path === "/knowledge"}
+          />
+
           {!collapsed && (
             <div className="px-3 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               Categories
@@ -117,6 +125,8 @@ export function HandbookLayout({
             <nav className="flex flex-col gap-1 p-2">
               <NavLink to="/" icon="Home" label="Home" collapsed={false} active={path === "/"} onClick={() => setMobileOpen(false)} />
               <NavLink to="/ask" icon="Sparkles" label="Ask About Anything" collapsed={false} active={path === "/ask"} onClick={() => setMobileOpen(false)} />
+              <NavLink to="/knowledge" icon="BookOpen" label="Knowledge Base" collapsed={false} active={path === "/knowledge"} onClick={() => setMobileOpen(false)} />
+
               <div className="px-3 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Categories
               </div>
