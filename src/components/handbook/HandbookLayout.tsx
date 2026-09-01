@@ -78,6 +78,14 @@ export function HandbookLayout({
             collapsed={collapsed}
             active={path === "/ask"}
           />
+          <NavLink
+            to="/knowledge"
+            icon="BookOpen"
+            label="Knowledge Base"
+            collapsed={collapsed}
+            active={path === "/knowledge"}
+          />
+
           {!collapsed && (
             <div className="px-3 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               Categories
