@@ -47,7 +47,7 @@ function AskPage() {
     setInput("");
     try {
       const hits = await askFaq(q);
-      setTurns((t) => [...t, { question: q, hits }]);
+      setTurns((t) => [{ question: q, hits }, ...t]);
     } catch (e) {
       setTurns((t) => [
         ...t,
@@ -128,7 +128,11 @@ function AskPage() {
                   turn.hits.map((hit, idx) => (
                     <article
                       key={hit.topic_id}
-                      className="rounded-2xl border border-border bg-card p-4 md:p-5"
+                      className={`rounded-2xl border p-4 md:p-5 ${
+                        hit.match_type === "exact"
+                          ? "border-primary/30 bg-primary/5 shadow-sm"
+                          : "border-border bg-card"
+                      }`}
                     >
                       <div className="flex flex-wrap items-center gap-2">
                         {idx === 0 && (
@@ -137,7 +141,13 @@ function AskPage() {
                           </span>
                         )}
                         {hit.match_type && (
-                          <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium capitalize text-muted-foreground">
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[11px] font-medium capitalize ${
+                              hit.match_type === "exact"
+                                ? "bg-primary/15 text-primary"
+                                : "bg-muted text-muted-foreground"
+                            }`}
+                          >
                             {hit.match_type} match
                           </span>
                         )}
