@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Home, Menu, Search, X } from "lucide-react";
+import { Menu, Search, X } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { LogoFull, LogoMark } from "./Logo";
 import { Icon } from "./Icon";
