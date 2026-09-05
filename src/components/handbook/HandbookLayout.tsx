@@ -239,7 +239,7 @@ function NavLink({
       }`}
       title={label}
     >
-      {icon === "Home" ? <Home className="h-4 w-4 shrink-0" /> : <Icon name={icon} size={16} className="shrink-0" />}
+      <Icon name={icon} size={16} className="shrink-0" />
       {!collapsed && <span className="truncate">{label}</span>}
       {!collapsed && typeof count === "number" && (
         <span
